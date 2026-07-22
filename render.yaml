@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: vnr202-app
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: node ws-server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20.0.0

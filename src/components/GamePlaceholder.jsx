@@ -1,300 +1,318 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Users, Trophy, UserCheck, ArrowRight, ArrowLeft, Skull, Zap, MessageSquare, Send, Globe, Radio } from 'lucide-react';
+import { 
+  ArrowLeft, BookOpen, CheckCircle, HelpCircle, RefreshCw, 
+  Sparkles, Trophy, Zap, Lightbulb, Users, UserCheck, Play,
+  Award, X, ArrowRight, Radio, Shield, Star, Crown
+} from 'lucide-react';
 import { DongSonStar } from './VietnameseMotifs';
 
-const QUESTIONS = [
-  // Phase 1 & 2: Chaos & Branch Battle Questions (Continuous Loop)
+// VNR202 Word Search Database
+const WORD_DATABASE = [
   {
-    id: 1,
-    text: "Theo Luật Phòng, chống tham nhũng hiện hành, hành vi tham nhũng được chia làm mấy nhóm chính?",
-    options: [
-      { key: "A", text: "Chỉ 1 nhóm duy nhất trong khu vực Nhà nước." },
-      { key: "B", text: "2 nhóm: Trong khu vực nhà nước và Ngoài khu vực nhà nước." },
-      { key: "C", text: "3 nhóm: Hành chính, Hình sự và Kinh tế." },
-      { key: "D", text: "4 nhóm tương ứng với các cơ quan hành pháp." }
-    ],
-    correctKey: "B"
+    word: "LIEMCHINH",
+    display: "LIÊM CHÍNH",
+    definition: "Nền tảng đạo đức cốt lõi của sinh viên và công chức. Cố Tổng Bí thư Nguyễn Phú Trọng nhấn mạnh: 'Danh dự mới là điều thiêng liêng, cao quý nhất'."
   },
   {
-    id: 2,
-    text: "Bản chất pháp lý cốt lõi phân biệt tội tham nhũng với tội trộm cắp thông thường là gì?",
-    options: [
-      { key: "A", text: "Giá trị tài sản bị thất thoát lớn hơn." },
-      { key: "B", text: "Chủ thể lợi dụng chức vụ, quyền hạn được giao để vụ lợi." },
-      { key: "C", text: "Hành vi được thực hiện vào ban ngày tại công sở." },
-      { key: "D", text: "Có sự đồng thuận của nhiều bên liên quan." }
-    ],
-    correctKey: "B"
+    word: "THAMNHUNG",
+    display: "THAM NHŨNG",
+    definition: "Hành vi của người có chức vụ, quyền hạn đã lợi dụng chức vụ, quyền hạn đó vì vụ lợi (Theo Luật PCTN 2018)."
   },
   {
-    id: 3,
-    text: "Ai là người phải chịu trách nhiệm chính khi để xảy ra tham nhũng trong cơ quan, tổ chức?",
-    options: [
-      { key: "A", text: "Người đứng đầu cơ quan, tổ chức đó." },
-      { key: "B", text: "Nhân viên trực tiếp ký tá hồ sơ kế toán." },
-      { key: "C", text: "Cơ quan thanh tra cấp trên trực tiếp quản lý." },
-      { key: "D", text: "Toàn bộ tập thể cán bộ công chức cùng chia đều trách nhiệm." }
-    ],
-    correctKey: "A"
+    word: "MINHBACH",
+    display: "MINH BẠCH",
+    definition: "Công khai, minh bạch các chính sách, tài chính và thủ tục hành chính để ngăn ngừa tiêu cực và tham nhũng."
   },
   {
-    id: 4,
-    text: "Cơ quan nào có thẩm quyền cao nhất giám sát tối cao công tác phòng chống tham nhũng toàn quốc?",
-    options: [
-      { key: "A", text: "Thanh tra Chính phủ." },
-      { key: "B", text: "Viện kiểm sát nhân dân tối cao." },
-      { key: "C", text: "Quốc hội nước Cộng hòa Xã hội Chủ nghĩa Việt Nam." },
-      { key: "D", text: "Bộ Công an." }
-    ],
-    correctKey: "C"
+    word: "DAODUC",
+    display: "ĐẠO ĐỨC",
+    definition: "Rèn luyện phẩm chất đạo đức nghề nghiệp và giữ vững liêm chính học thuật ngay từ khi còn ngồi trên ghế nhà trường."
   },
   {
-    id: 5,
-    text: "Trong các nguyên nhân khách quan, kẽ hở pháp luật nào thường bị tội phạm tham nhũng lợi dụng?",
-    options: [
-      { key: "A", text: "Luật pháp quy định mức án quá nặng." },
-      { key: "B", text: "Hệ thống pháp luật còn chồng chéo, mâu thuẫn, chậm sửa đổi bổ sung." },
-      { key: "C", text: "Quy trình thanh tra tài chính quá rườm rà." },
-      { key: "D", text: "Không có quy định bảo vệ tài sản công." }
-    ],
-    correctKey: "B"
+    word: "TRACHNHIEM",
+    display: "TRÁCH NHỆM",
+    definition: "Trách nhiệm của người đứng đầu cơ quan tổ chức khi để xảy ra tham nhũng và nghĩa vụ giải trình trước nhân dân."
   },
   {
-    id: 6,
-    text: "Hành vi nào dưới đây KHÔNG thuộc nhóm hành vi tham nhũng trong khu vực doanh nghiệp tư nhân?",
-    options: [
-      { key: "A", text: "Thủ kho công ty tư nhân lấy trộm hàng hóa mang đi bán cá nhân." },
-      { key: "B", text: "Nhận hối lộ để ưu tiên ký kết hợp đồng thầu phụ yếu kém." },
-      { key: "C", text: "Đưa hối lộ cho đối tác để giành quyền lợi trái luật." },
-      { key: "D", text: "Tham ô quỹ đầu tư của các cổ đông công ty đại chúng." }
-    ],
-    correctKey: "A"
-  },
-  // Phase 3: Team Duo Questions
-  {
-    id: 7,
-    text: "Team Battle: Luật Phòng, chống tham nhũng Việt Nam hiện hành (năm 2018) có hiệu lực thi hành từ ngày nào?",
-    options: [
-      { key: "A", text: "Ngày 01/01/2019" },
-      { key: "B", text: "Ngày 01/07/2019" },
-      { key: "C", text: "Ngày 01/01/2020" },
-      { key: "D", text: "Ngày 02/09/2019" }
-    ],
-    correctKey: "B"
+    word: "GIAODUC",
+    display: "GIÁO DỤC",
+    definition: "Chỉ thị 10/CT-TTg đưa nội dung phòng chống tham nhũng vào giảng dạy tại các cơ sở giáo dục trên toàn quốc từ năm học 2013-2014."
   },
   {
-    id: 8,
-    text: "Team Battle: Công ước của Liên Hợp Quốc về chống tham nhũng mà Việt Nam tham gia ký kết có tên viết tắt là gì?",
-    options: [
-      { key: "A", text: "UNCAC" },
-      { key: "B", text: "UNODC" },
-      { key: "C", text: "UNICEF" },
-      { key: "D", text: "UNESCO" }
-    ],
-    correctKey: "A"
+    word: "TOCAO",
+    display: "TỐ CÁO",
+    definition: "Quyền và nghĩa vụ của công dân trong việc phát hiện, tố giác tham nhũng; Luật Tố cáo 2018 có riêng 1 chương bảo vệ người tố cáo."
   },
   {
-    id: 9,
-    text: "Team Battle: Tác hại về mặt xã hội nguy hiểm nhất mà tham nhũng gây ra cho cộng đồng là gì?",
-    options: [
-      { key: "A", text: "Làm chậm tiến trình xây dựng hạ tầng kỹ thuật." },
-      { key: "B", text: "Băng hoại giá trị đạo đức truyền thống và chuẩn mực đạo lý xã hội." },
-      { key: "C", text: "Làm gia tăng tỷ lệ lạm phát tiền tệ." },
-      { key: "D", text: "Gây cản trở giao thương quốc tế." }
-    ],
-    correctKey: "B"
-  },
-  // Phase 4: Grand Finale 1v1 Questions
-  {
-    id: 10,
-    text: "Chung Kết 1v1: Chỉ thị số 10/CT-TTg của Thủ tướng Chính phủ quy định nội dung gì nổi bật trong giáo dục?",
-    options: [
-      { key: "A", text: "Miễn học phí cho sinh viên ngành Luật." },
-      { key: "B", text: "Đưa nội dung phòng chống tham nhũng vào giảng dạy tại các cơ sở GD&ĐT từ năm học 2013-2014." },
-      { key: "C", text: "Bắt buộc thi tốt nghiệp môn VNR202." },
-      { key: "D", text: "Tổ chức tuần lễ liêm chính học đường hàng năm." }
-    ],
-    correctKey: "B"
+    word: "UNCAC",
+    display: "UNCAC",
+    definition: "Công ước của Liên Hợp Quốc về chống tham nhũng (UNCAC) mà Việt Nam là quốc gia thành viên tích cực."
   },
   {
-    id: 11,
-    text: "Chung Kết 1v1: Nhận hối lộ gián tiếp qua người trung gian hoặc nhận lợi ích phi vật chất có bị xử lý hình sự tội Nhận hối lộ không?",
-    options: [
-      { key: "A", text: "Không, chỉ bị phạt hành chính và kỷ luật đảng." },
-      { key: "B", text: "Có, bị xử lý hình sự tương tự như nhận trực tiếp." },
-      { key: "C", text: "Chỉ xử lý khi giá trị tài sản quy đổi trên 1 tỷ đồng." },
-      { key: "D", text: "Không quy định cụ thể trong Bộ luật Hình sự." }
-    ],
-    correctKey: "B"
+    word: "VNR202",
+    display: "VNR202",
+    definition: "Môn học Lịch sử Đảng Cộng sản Việt Nam & Giáo dục Văn hóa Liêm chính phòng chống tham nhũng."
   },
   {
-    id: 12,
-    text: "Chung Kết 1v1: Trụ cột cốt lõi nhất để sinh viên xây dựng văn hóa phòng chống tham nhũng học đường là gì?",
-    options: [
-      { key: "A", text: "Nghiên cứu sâu các văn bản pháp luật của Nhà nước." },
-      { key: "B", text: "Giữ vững tính liêm chính học thuật (không gian lận thi cử, không đạo văn)." },
-      { key: "C", text: "Tham gia các kỳ thi tìm hiểu pháp luật trực tuyến." },
-      { key: "D", text: "Thành lập ban thanh tra sinh viên tự quản." }
-    ],
-    correctKey: "B"
+    word: "BONKHONG",
+    display: "BỐN KHÔNG",
+    definition: "Mục tiêu chiến lược của Đảng: Không thể, Không dám, Không cần, Không muốn tham nhũng."
+  },
+  {
+    word: "THANHTRA",
+    display: "THANH TRA",
+    definition: "Hoạt động xem xét, đánh giá, xử lý việc thực hiện chính sách, pháp luật, nhiệm vụ của cơ quan, tổ chức, cá nhân."
+  },
+  {
+    word: "KIEMTRA",
+    display: "KIỂM TRA",
+    definition: "Công tác kiểm tra, giám sát của Đảng là phương thức lãnh đạo quan trọng để giữ vững kỷ luật, kỷ cương."
+  },
+  {
+    word: "GIAMSAT",
+    display: "GIÁM SÁT",
+    definition: "Giám sát của Mặt trận Tổ quốc, báo chí và nhân dân trong công tác phòng chống tham nhũng, tiêu cực."
+  },
+  {
+    word: "KEKHAI",
+    display: "KÊ KHAI",
+    definition: "Nghĩa vụ kê khai tài sản, thu nhập của người có chức vụ, quyền hạn nhằm minh bạch hóa tài sản công chức."
+  },
+  {
+    word: "GIATRINH",
+    display: "GIẢI TRÌNH",
+    definition: "Nghĩa vụ của cơ quan, tổ chức, cá nhân trong việc cung cấp, làm rõ thông tin về quyết định, hành vi của mình."
+  },
+  {
+    word: "DANHDU",
+    display: "DANH DỰ",
+    definition: "Giá trị đạo đức nhân văn cao quý nhất của người cán bộ, đảng viên và sinh viên học tập liêm chính."
+  },
+  {
+    word: "CONGKHAI",
+    display: "CÔNG KHAI",
+    definition: "Nguyên tắc công khai hoạt động của cơ quan, tổ chức để nhân dân biết, nhân dân bàn, nhân dân làm, nhân dân kiểm tra."
+  },
+  {
+    word: "PHONGCHONG",
+    display: "PHÒNG CHỐNG",
+    definition: "Phương châm kết hợp chặt chẽ giữa phòng ngừa chủ động và đấu tranh kiên quyết chống tham nhũng, tiêu cực."
+  },
+  {
+    word: "PHAPLUAT",
+    display: "PHÁP LUẬT",
+    definition: "Thượng tôn pháp luật, mọi hành vi vi phạm và tham nhũng đều phải bị xử lý nghiêm minh, không có vùng cấm."
+  },
+  {
+    word: "KYLUAT",
+    display: "KỶ LUẬT",
+    definition: "Siết chặt kỷ luật, kỷ cương trong Đảng và bộ máy nhà nước, xử lý nghiêm cán bộ vi phạm văn hóa liêm chính."
+  },
+  {
+    word: "CONGDUC",
+    display: "CÔNG ĐỨC",
+    definition: "Tấm lòng phụng sự tổ quốc, phục vụ nhân dân, đặt lợi ích chung của quốc gia dân tộc lên trên hết."
+  },
+  {
+    word: "TRUNGTHUC",
+    display: "TRUNG THỰC",
+    definition: "Tính trung thực trong học tập, thi cử và công tác; nói đi đôi với làm, không gian lận hay dối trá."
+  },
+  {
+    word: "CONGMINH",
+    display: "CÔNG MINH",
+    definition: "Xử lý công tâm, chính trực, không bao che, không thiên vị trong công tác cán bộ và quản lý xã hội."
+  },
+  {
+    word: "VIETNAM",
+    display: "VIỆT NAM",
+    definition: "Quyết tâm xây dựng nước Việt Nam hùng cường, minh bạch, liêm chính và phát triển bền vững."
+  },
+  {
+    word: "CONGCHUC",
+    display: "CÔNG CHỨC",
+    definition: "Đội ngũ cán bộ, công chức, viên chức tận tụy, liêm chính, hết lòng vì sự nghiệp phát triển của đất nước."
   }
 ];
 
-const BOT_NAMES = [
-  "Nam Anh", "Bích Phương", "Gia Huy", "Minh Tuấn", "Thanh Hằng", 
-  "Quốc Bảo", "Xuân Trường", "Mai Chi", "Hữu Đạt", "Thu Trang", 
-  "Khánh Linh", "Duy Anh", "Hải Yến", "Việt Hoàng", "Quỳnh Anh", 
-  "Tấn Phát", "Hoài An", "Ngọc Bích", "Văn Đức"
+const PASTEL_COLORS = [
+  '#00f0ff', '#ff007f', '#00ff88', '#ffd700', 
+  '#a855f7', '#ff6b6b', '#3b82f6', '#ec4899', '#f97316', '#10b981'
 ];
 
-const CHAT_BOT_PHRASES = [
-  "Câu này chắc chắn là B bạn ơi, tôi đọc tài liệu rồi!",
-  "Tôi nghĩ đáp án là C, bạn đồng ý không?",
-  "Đáp án đúng là B đó, chọn đi nào!",
-  "Câu này dễ, chắc chắn A rồi bạn!",
-  "Đồng đội ơi, mình phối hợp chọn C nhé!",
-  "Để tôi chọn B cho chắc cú nha!"
+const FILL_CHARS = ['A', 'B', 'C', 'D', 'E', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'X', 'Y', '2', '0'];
+
+const DIRECTIONS = [
+  { dx: 1, dy: 0 },   // Horizontal Right
+  { dx: -1, dy: 0 },  // Horizontal Left
+  { dx: 0, dy: 1 },   // Vertical Down
+  { dx: 0, dy: -1 },  // Vertical Up
+  { dx: 1, dy: 1 },   // Diagonal Down-Right
+  { dx: -1, dy: -1 }, // Diagonal Up-Left
+  { dx: -1, dy: 1 },  // Diagonal Down-Left
+  { dx: 1, dy: -1 }   // Diagonal Up-Right
+];
+
+// 8 Interactive Animal Mascots
+const ANIMAL_MASCOTS = [
+  { id: 'fox', emoji: '🦊', name: 'Cáo Minh Bạch', title: 'Minh Bạch', color: '#ff7700' },
+  { id: 'lion', emoji: '🦁', name: 'Sư Tử Dũng Cảm', title: 'Dũng Cảm', color: '#ffd700' },
+  { id: 'owl', emoji: '🦉', name: 'Cú Uyên Bác', title: 'Uyên Bác', color: '#a855f7' },
+  { id: 'panda', emoji: '🐼', name: 'Gấu Trúc Công Bằng', title: 'Công Bằng', color: '#00ff88' },
+  { id: 'tiger', emoji: '🐯', name: 'Hổ Quyết Thắng', title: 'Quyết Thắng', color: '#ff4444' },
+  { id: 'dolphin', emoji: '🐬', name: 'Cá Thần Thông', title: 'Nhanh Trí', color: '#00f0ff' },
+  { id: 'eagle', emoji: '🦅', name: 'Đại Bàng Quang Minh', title: 'Liêm Chính', color: '#f97316' },
+  { id: 'rabbit', emoji: '🐰', name: 'Thỏ Tinh Anh', title: 'Tinh Anh', color: '#ec4899' }
 ];
 
 export default function GamePlaceholder() {
-  const [gameState, setGameState] = useState('ROLE_SELECTION');
-  const [gameMode, setGameMode] = useState('OFFLINE'); 
+  const [gameState, setGameState] = useState('ROLE_SELECTION'); // ROLE_SELECTION, LOBBY, PLAYING, FINISHED
+  const [isHost, setIsHost] = useState(false);
   const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
-  const [players, setPlayers] = useState([]);
-  
-  const [chaosQuestionIdx, setChaosQuestionIdx] = useState(0); 
-  const [teamQuestionIdx, setTeamQuestionIdx] = useState(0); 
-  const [finaleQuestionIdx, setFinaleQuestionIdx] = useState(0); 
-  const [timer, setTimer] = useState(45);
-  
-  const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [tempSelectedAnswer, setTempSelectedAnswer] = useState(null);
-  const [answeredInRound, setAnsweredInRound] = useState(0);
-  const [hasAnswered, setHasAnswered] = useState(false);
-  const [score, setScore] = useState(0);
-  const [pointsGained, setPointsGained] = useState(0);
-  const [isCorrectAns, setIsCorrectAns] = useState(false);
-  const [activeBranch, setActiveBranch] = useState('WINNERS'); 
-  
-  const [teams, setTeams] = useState([]); 
-  const [myTeamId, setMyTeamId] = useState(null);
-  const [myTeammate, setMyTeammate] = useState(null);
-  const [winningTeamName, setWinningTeamName] = useState('');
-  const [finalists, setFinalists] = useState([]);
+  const [selectedMascot, setSelectedMascot] = useState(ANIMAL_MASCOTS[0]);
 
-  const [chatMessages, setChatMessages] = useState([]); 
-  const [chatInput, setChatInput] = useState('');
-  const [classChats, setClassChats] = useState([]); 
-
+  // Individual Leaderboard State
   const [leaderboard, setLeaderboard] = useState([]);
-  const [midpointIndex, setMidpointIndex] = useState(10);
-  const [isHost, setIsHost] = useState(false);
-  const [connectionError, setConnectionError] = useState('');
+
+  // Game Board State
+  const gridSize = 16;
+  const [grid, setGrid] = useState([]);
+  const [targetWords, setTargetWords] = useState([]);
+  
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [startCell, setStartCell] = useState(null);
+  const [selectedPath, setSelectedPath] = useState([]);
+  
+  const GAME_DURATION = 540; // 9 minutes = 540 seconds
+  const [score, setScore] = useState(0);
+  const [timer, setTimer] = useState(GAME_DURATION);
+  const [timerActive, setTimerActive] = useState(false);
+  const [hintsLeft, setHintsLeft] = useState(3);
+  const [hintedPos, setHintedPos] = useState(null);
+  const [latestToast, setLatestToast] = useState(null);
+  const [floatingBubbles, setFloatingBubbles] = useState([]);
+
+  const [showRuleModal, setShowRuleModal] = useState(false);
+  const [activeDefinition, setActiveDefinition] = useState(null);
+
+  // Trigger floating rising bubble
+  const triggerFloatingBubble = (avatar, name, word) => {
+    const id = Date.now() + Math.random();
+    const randomLeft = 12 + Math.floor(Math.random() * 68);
+    const newBubble = { id, avatar, name, word, left: `${randomLeft}%` };
+
+    setFloatingBubbles((prev) => [...prev.slice(-4), newBubble]);
+
+    setTimeout(() => {
+      setFloatingBubbles((prev) => prev.filter((b) => b.id !== id));
+    }, 4200);
+  };
   
   const socketRef = useRef(null);
-  const timerIntervalRef = useRef(null);
-  const simulationIntervalRef = useRef(null);
-  const chatContainerRef = useRef(null);
-  const hostChatContainerRef = useRef(null);
 
+  // Cleanup WebSockets
   useEffect(() => {
     return () => {
-      clearInterval(timerIntervalRef.current);
-      clearInterval(simulationIntervalRef.current);
-      if (socketRef.current) socketRef.current.close();
+      if (socketRef.current) {
+        try { socketRef.current.close(); } catch (e) {}
+      }
     };
   }, []);
 
+  // 9-Minute Countdown Timer Effect
   useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  }, [chatMessages]);
-
-  useEffect(() => {
-    if (hostChatContainerRef.current) {
-      hostChatContainerRef.current.scrollTop = hostChatContainerRef.current.scrollHeight;
-    }
-  }, [classChats]);
-
-  useEffect(() => {
-    if (gameState === 'CHAOS_ROUND' || gameState === 'BRANCH_BATTLE' || gameState === 'TEAM_DUO_ROUND' || gameState === 'GRAND_FINALE') {
-      clearInterval(timerIntervalRef.current);
-      let initTime = 15;
-      if (gameState === 'CHAOS_ROUND' || gameState === 'BRANCH_BATTLE' || gameState === 'TEAM_DUO_ROUND') {
-        initTime = 45;
-      } else {
-        initTime = 15;
-      }
-      setTimer(initTime);
-      
-      timerIntervalRef.current = setInterval(() => {
-        setTimer((prev) => {
-          if (prev <= 1) {
-            clearInterval(timerIntervalRef.current);
-            handleTimeExpired();
+    let interval = null;
+    if (timerActive && gameState === 'PLAYING') {
+      interval = setInterval(() => {
+        setTimer((t) => {
+          if (t <= 1) {
+            clearInterval(interval);
+            setTimerActive(false);
+            setGameState('FINISHED');
+            triggerToast('⏰ Đã hết thời gian 9 phút thi đấu!');
             return 0;
           }
-          return prev - 1;
+          return t - 1;
         });
       }, 1000);
     }
-    return () => clearInterval(timerIntervalRef.current);
-  }, [gameState, teamQuestionIdx, finaleQuestionIdx]);
+    return () => clearInterval(interval);
+  }, [timerActive, gameState]);
 
-  const handleTimeExpired = () => {
-    if (isHost) {
-      if (gameState === 'CHAOS_ROUND') {
-        handleSplitBrackets();
-      } else if (gameState === 'BRANCH_BATTLE') {
-        handleProcessBranchBattle();
-      } else if (gameState === 'TEAM_DUO_ROUND') {
-        if (teamQuestionIdx < 2) {
-          handleNextTeamQuestion();
-        } else {
-          handleFinishTeamDuo();
-        }
-      } else if (gameState === 'GRAND_FINALE') {
-        if (finaleQuestionIdx < 2) {
-          handleNextFinaleQuestion();
-        } else {
-          handleFinishGame();
-        }
+  // Toast notification helper
+  const triggerToast = (msg, duration = 3500) => {
+    setLatestToast(msg);
+    setTimeout(() => setLatestToast(null), duration);
+  };
+
+  // Safe Socket Message Sender
+  const safeSendSocketMessage = (payload) => {
+    try {
+      if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+        socketRef.current.send(JSON.stringify(payload));
+        return true;
+      } else {
+        triggerToast('⚠️ Đang kết nối máy chủ WebSocket...');
+        connectWebSocket((ws) => {
+          ws.send(JSON.stringify(payload));
+        });
+        return false;
       }
-    } else {
-      if (!hasAnswered) {
-        setHasAnswered(true);
-        setSelectedAnswer(null);
-        setIsCorrectAns(false);
-        setPointsGained(0);
-      }
+    } catch (e) {
+      console.error('Socket send exception:', e);
+      return false;
     }
   };
 
+  // Connect WebSocket safely
   const connectWebSocket = (onOpenCallback) => {
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      if (onOpenCallback) onOpenCallback(socketRef.current);
+      return;
+    }
+
+    if (socketRef.current) {
+      try {
+        socketRef.current.onopen = null;
+        socketRef.current.onmessage = null;
+        socketRef.current.onerror = null;
+        socketRef.current.close();
+      } catch (e) {}
+    }
+
     try {
-      setConnectionError('Đang kết nối tới máy chủ...');
-      const host = window.location.hostname || 'localhost';
-      const wsUrl = `ws://${host}:8080`;
+      let wsUrl = import.meta.env.VITE_WS_URL;
+
+      if (!wsUrl) {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const hostname = window.location.hostname || 'localhost';
+        const port = window.location.port ? `:${window.location.port}` : (hostname === 'localhost' ? ':8080' : '');
+        wsUrl = `${protocol}//${hostname}${port}`;
+      }
+
       const ws = new WebSocket(wsUrl);
       socketRef.current = ws;
 
       ws.onopen = () => {
-        setConnectionError('');
         if (onOpenCallback) onOpenCallback(ws);
       };
 
       ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        handleServerMessage(data);
+        try {
+          const data = JSON.parse(event.data);
+          handleServerMessage(data);
+        } catch (e) {
+          console.error("Error parsing message:", e);
+        }
       };
 
-      ws.onerror = () => {
-        setConnectionError('Không kết nối được tới máy chủ WebSocket.');
+      ws.onerror = (err) => {
+        console.error("WebSocket Error:", err);
+        triggerToast('Không thể kết nối tới máy chủ WebSocket (Port 8080)!');
       };
     } catch (e) {
-      setConnectionError('Lỗi kết nối WebSocket!');
+      triggerToast('Lỗi mở kết nối WebSocket!');
     }
   };
 
@@ -302,609 +320,293 @@ export default function GamePlaceholder() {
     switch (data.type) {
       case 'ROOM_CREATED':
         setRoomCode(data.roomCode);
-        setGameState('HOST_LOBBY');
-        break;
-
-      case 'PLAYERS_LIST':
-        setPlayers(data.players.map(name => ({ name, score: 0, activeBranch: 'WINNERS' })));
+        setGameState('LOBBY');
+        triggerToast(`Đã tạo phòng ${data.roomCode} thành công!`);
         break;
 
       case 'JOINED_SUCCESS':
         setRoomCode(data.roomCode);
-        setGameState('PLAYER_LOBBY');
+        setGameState('LOBBY');
+        triggerToast(`Đã tham gia phòng ${data.roomCode}!`);
         break;
 
-      case 'SUBMISSION_STATUS':
-        if (data.leaderboard) {
-          setLeaderboard(data.leaderboard);
+      case 'ROOM_STATE_UPDATE':
+        setLeaderboard(data.leaderboard || []);
+        if (data.status === 'PLAYING' && gameState === 'LOBBY') {
+          initializeBoard();
+          setGameState('PLAYING');
+          setTimerActive(true);
+        }
+        break;
+
+      case 'ERROR':
+        triggerToast(`⚠️ ${data.message || 'Có lỗi xảy ra!'}`);
+        if (gameState !== 'LOBBY' && gameState !== 'PLAYING') {
+          setGameState('ROLE_SELECTION');
         }
         break;
 
       case 'GAME_STARTED':
-        setChaosQuestionIdx(0);
-        setSelectedAnswer(null);
-        setTempSelectedAnswer(null);
-        setHasAnswered(false);
-        setAnsweredInRound(0);
-        if (data.phase === 'CHAOS') {
-          setScore(0);
-          setGameState('CHAOS_ROUND');
-        } else if (data.phase === 'BRANCH_BATTLE') {
-          setGameState('BRANCH_BATTLE');
+        setLeaderboard(data.leaderboard || []);
+        initializeBoard();
+        setGameState('PLAYING');
+        setTimerActive(true);
+        break;
+
+      case 'LEADERBOARD_UPDATE':
+        setLeaderboard(data.leaderboard || []);
+        if (data.latestFinder) {
+          const isMe = data.latestFinder === playerName.trim();
+          const displayName = isMe ? `${data.latestFinder} (Bạn)` : data.latestFinder;
+          triggerFloatingBubble(data.latestAvatar || '🌟', displayName, data.latestWord);
         }
-        break;
-
-      case 'ANSWER_RESULT':
-        setIsCorrectAns(data.isCorrect);
-        setPointsGained(data.pointsGained);
-        setScore(data.totalScore);
-        break;
-
-      case 'BRACKETS_UPDATED':
-        setLeaderboard(data.leaderboard);
-        setMidpointIndex(data.midpointIndex);
-        setGameState('BRACKET_SPLIT');
-        
-        const myStatus = data.leaderboard.find(p => p.name === playerName);
-        if (myStatus) {
-          setActiveBranch(myStatus.activeBranch);
+        const winner = data.leaderboard.find(p => p.foundCount >= WORD_DATABASE.length);
+        if (winner) {
+          setTimerActive(false);
+          setGameState('FINISHED');
         }
-        break;
-
-      case 'TEAMS_CREATED':
-        setTeams(data.teams);
-        setLeaderboard(data.leaderboard);
-        setGameState('TEAM_LOBBY');
-
-        const statusInTeams = data.leaderboard.find(p => p.name === playerName);
-        if (statusInTeams) {
-          setActiveBranch(statusInTeams.activeBranch);
-        } else {
-          setActiveBranch('ELIMINATED');
-        }
-
-        const myTeam = data.teams.find(t => t.p1 === playerName || t.p2 === playerName);
-        if (myTeam) {
-          setMyTeamId(myTeam.id);
-          setMyTeammate(myTeam.p1 === playerName ? myTeam.p2 : myTeam.p1);
-          setScore(myTeam.score);
-        } else {
-          setMyTeamId(null);
-          setMyTeammate(null);
-        }
-        break;
-
-      case 'TEAM_DUO_STARTED':
-        setTeamQuestionIdx(0);
-        setSelectedAnswer(null);
-        setTempSelectedAnswer(null);
-        setHasAnswered(false);
-        setChatMessages([]);
-        setGameState('TEAM_DUO_ROUND');
-        break;
-
-      case 'TEAM_CHAT_RECEIVED':
-        setChatMessages(prev => [...prev, { sender: data.sender, text: data.text }]);
-        break;
-
-      case 'CLASS_CHAT_EVENT':
-        setClassChats(prev => [...prev, { teamName: data.teamName, sender: data.sender, text: data.text }]);
-        break;
-
-      case 'TEAM_SCORE_UPDATE':
-        setTeams(prev => prev.map(t => t.id === data.teamId ? { ...t, score: data.score } : t));
-        const activeT = myTeamId === data.teamId;
-        if (activeT) {
-          setScore(data.score);
-        }
-        break;
-
-      case 'NEW_QUESTION':
-        if (data.questionIndex >= 6 && data.questionIndex <= 8) {
-          setTeamQuestionIdx(data.questionIndex - 6);
-        } else if (data.questionIndex >= 9 && data.questionIndex <= 11) {
-          setFinaleQuestionIdx(data.questionIndex - 9);
-        }
-        setSelectedAnswer(null);
-        setTempSelectedAnswer(null);
-        setHasAnswered(false);
-        break;
-
-      case 'FINALE_ROSTER_READY':
-        setLeaderboard(data.leaderboard);
-        setWinningTeamName(data.winningTeamName);
-        setFinalists(data.finalists);
-        setGameState('FINALE_LOBBY');
-
-        const endStatus = data.leaderboard.find(p => p.name === playerName);
-        if (endStatus) {
-          setActiveBranch(endStatus.activeBranch);
-          setScore(endStatus.score);
-        }
-        break;
-
-      case 'FINALE_STARTED':
-        setFinaleQuestionIdx(0);
-        setSelectedAnswer(null);
-        setTempSelectedAnswer(null);
-        setHasAnswered(false);
-        setGameState('GRAND_FINALE');
-        break;
-
-      case 'GAME_FINISHED':
-        setLeaderboard(data.finalScores);
-        setGameState('FINAL_LEADERBOARD');
         break;
 
       case 'HOST_DISCONNECTED':
-        alert('Host đã rời phòng đấu! Trận đấu kết thúc.');
+        triggerToast('Host đã rời phòng! Trận đấu kết thúc.');
         resetToRoleSelection();
         break;
     }
   };
 
+  // Generate Fixed/Deterministic Grid for Fair Play
+  const initializeBoard = () => {
+    const size = 16;
+    const newGrid = Array(size).fill(null).map(() => Array(size).fill(null));
+    const placedList = [];
+
+    WORD_DATABASE.forEach((wordObj, colorIdx) => {
+      const wordStr = wordObj.word;
+      let placed = false;
+      let attempts = 0;
+
+      while (!placed && attempts < 150) {
+        attempts++;
+        const dir = DIRECTIONS[(colorIdx * 3 + attempts) % DIRECTIONS.length];
+        const startR = (colorIdx * 2 + attempts * 7) % size;
+        const startC = (colorIdx * 5 + attempts * 3) % size;
+
+        let fit = true;
+        const positions = [];
+
+        for (let i = 0; i < wordStr.length; i++) {
+          const r = startR + dir.dy * i;
+          const c = startC + dir.dx * i;
+
+          if (r < 0 || r >= size || c < 0 || c >= size) {
+            fit = false;
+            break;
+          }
+          if (newGrid[r][c] !== null && newGrid[r][c] !== wordStr[i]) {
+            fit = false;
+            break;
+          }
+          positions.push({ r, c });
+        }
+
+        if (fit) {
+          positions.forEach((pos, idx) => {
+            newGrid[pos.r][pos.c] = wordStr[idx];
+          });
+          placedList.push({
+            ...wordObj,
+            positions,
+            color: PASTEL_COLORS[colorIdx % PASTEL_COLORS.length],
+            found: false
+          });
+          placed = true;
+        }
+      }
+    });
+
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (newGrid[r][c] === null) {
+          const charIdx = (r * 13 + c * 7) % FILL_CHARS.length;
+          newGrid[r][c] = FILL_CHARS[charIdx];
+        }
+      }
+    }
+
+    setGrid(newGrid);
+    setTargetWords(placedList);
+    setScore(0);
+    setTimer(GAME_DURATION);
+    setHintsLeft(3);
+  };
+
+  // Host Create Room via WebSocket
   const handleHostCreateRoom = () => {
     setIsHost(true);
-    if (gameMode === 'OFFLINE') {
-      const code = `Sim-${Math.floor(1000 + Math.random() * 9000)}`;
-      setRoomCode(code);
-      setGameState('HOST_LOBBY');
-      
-      let botsCount = 0;
-      setPlayers([]);
-      clearInterval(simulationIntervalRef.current);
-      simulationIntervalRef.current = setInterval(() => {
-        if (botsCount < 19) {
-          const newBot = BOT_NAMES[botsCount];
-          setPlayers((prev) => [...prev, { name: newBot, score: 0, activeBranch: 'WINNERS' }]);
-          botsCount++;
-        } else {
-          clearInterval(simulationIntervalRef.current);
-        }
-      }, 200);
-    } else {
-      connectWebSocket((ws) => {
-        ws.send(JSON.stringify({ type: 'CREATE_ROOM' }));
-      });
-    }
+    connectWebSocket((ws) => {
+      ws.send(JSON.stringify({ type: 'CREATE_ROOM' }));
+    });
   };
 
+  // Player Join Room via WebSocket with Animal Mascot Avatar
   const handlePlayerJoinRoom = () => {
-    if (!playerName.trim() || !roomCode.trim()) {
-      alert('Vui lòng điền đủ Tên và Mã phòng chơi!');
+    const trimmedName = playerName.trim();
+    const trimmedCode = roomCode.trim();
+
+    if (!trimmedName || !trimmedCode) {
+      triggerToast('Vui lòng điền đủ Tên và Mã phòng chơi!');
       return;
     }
+
     setIsHost(false);
-    if (gameMode === 'OFFLINE') {
-      alert('Chế độ Giả lập chỉ dùng cho Host.');
-    } else {
-      connectWebSocket((ws) => {
-        ws.send(JSON.stringify({ type: 'JOIN_ROOM', roomCode, playerName }));
-      });
-    }
-  };
-
-  const handleStartChaosRound = () => {
-    if (gameMode === 'OFFLINE') {
-      setLeaderboard(players.map(p => ({ ...p, score: 0, answeredCount: 0 })));
-      setGameState('CHAOS_ROUND');
-      setChaosQuestionIdx(0);
-      startOfflineChaosBotsSimulation();
-    } else {
-      if (socketRef.current) socketRef.current.send(JSON.stringify({ type: 'START_CHAOS' }));
-    }
-  };
-
-  const handleSplitBrackets = () => {
-    if (gameMode === 'OFFLINE') {
-      const sorted = [...leaderboard].sort((a, b) => b.score - a.score);
-      const mid = 10;
-      sorted.forEach((p, idx) => {
-        p.activeBranch = idx < mid ? 'WINNERS' : 'LOSERS';
-      });
-      setLeaderboard(sorted);
-      setMidpointIndex(mid);
-      setGameState('BRACKET_SPLIT');
-    } else {
-      if (socketRef.current) socketRef.current.send(JSON.stringify({ type: 'SPLIT_BRACKETS' }));
-    }
-  };
-
-  const handleStartBranchBattle = () => {
-    if (gameMode === 'OFFLINE') {
-      setGameState('BRANCH_BATTLE');
-      setChaosQuestionIdx(0);
-      startOfflineBranchBattleSimulation();
-    } else {
-      if (socketRef.current) socketRef.current.send(JSON.stringify({ type: 'START_BRANCH_BATTLE' }));
-    }
-  };
-
-  const handleProcessBranchBattle = () => {
-    if (gameMode === 'OFFLINE') {
-      const winners = leaderboard.filter(p => p.activeBranch === 'WINNERS');
-      const losers = leaderboard.filter(p => p.activeBranch === 'LOSERS');
-      winners.sort((a, b) => b.score - a.score);
-      losers.sort((a, b) => b.score - a.score);
-
-      const survivorsW = winners.slice(0, 4);
-      const survivorsL = losers.slice(0, 2);
-      const survivorsNames = [...survivorsW, ...survivorsL].map(p => p.name);
-
-      const updated = leaderboard.map((p) => {
-        if (survivorsNames.includes(p.name)) {
-          return p;
-        } else {
-          return { ...p, activeBranch: 'ELIMINATED' };
-        }
-      });
-
-      const teamSetup = [
-        { id: 'TEAM_1', name: 'Đội Sao Lạc', p1: survivorsW[0]?.name, p2: survivorsL[1]?.name, score: 0 },
-        { id: 'TEAM_2', name: 'Đội Trống Đồng', p1: survivorsW[1]?.name, p2: survivorsL[0]?.name, score: 0 },
-        { id: 'TEAM_3', name: 'Đội Liêm Chính', p1: survivorsW[2]?.name, p2: survivorsW[3]?.name, score: 0 }
-      ];
-
-      setTeams(teamSetup);
-      setLeaderboard(updated);
-      setGameState('TEAM_LOBBY');
-    } else {
-      if (socketRef.current) socketRef.current.send(JSON.stringify({ type: 'PROCESS_BRANCH_BATTLE' }));
-    }
-  };
-
-  const handleStartTeamDuoRound = () => {
-    if (gameMode === 'OFFLINE') {
-      setTeamQuestionIdx(0);
-      setGameState('TEAM_DUO_ROUND');
-      setChatMessages([]);
-      setClassChats([]);
-      startOfflineTeamBotsSimulation();
-    } else {
-      if (socketRef.current) socketRef.current.send(JSON.stringify({ type: 'START_TEAM_DUO' }));
-    }
-  };
-
-  const handleNextTeamQuestion = () => {
-    const nextIdx = teamQuestionIdx + 1;
-    if (gameMode === 'OFFLINE') {
-      setTeamQuestionIdx(nextIdx);
-      setGameState('TEAM_DUO_ROUND');
-      startOfflineTeamBotsSimulation();
-    } else {
-      if (socketRef.current) {
-        socketRef.current.send(JSON.stringify({ type: 'NEXT_QUESTION', questionIndex: 6 + nextIdx }));
-      }
-    }
-  };
-
-  const handleFinishTeamDuo = () => {
-    if (gameMode === 'OFFLINE') {
-      const sortedTeams = [...teams].sort((a, b) => b.score - a.score);
-      const winningT = sortedTeams[0];
-      setWinningTeamName(winningT.name);
-      setFinalists([winningT.p1, winningT.p2]);
-
-      const updated = leaderboard.map((p) => {
-        if ([winningT.p1, winningT.p2].includes(p.name)) {
-          return { ...p, activeBranch: 'WINNERS', score: winningT.score }; 
-        } else {
-          return { ...p, activeBranch: 'ELIMINATED' };
-        }
-      });
-
-      setLeaderboard(updated);
-      setGameState('FINALE_LOBBY');
-    } else {
-      if (socketRef.current) socketRef.current.send(JSON.stringify({ type: 'FINISH_TEAM_DUO' }));
-    }
-  };
-
-  const handleStartFinaleRound = () => {
-    if (gameMode === 'OFFLINE') {
-      setFinaleQuestionIdx(0);
-      setGameState('GRAND_FINALE');
-      startOfflineFinaleBotsSimulation();
-    } else {
-      if (socketRef.current) socketRef.current.send(JSON.stringify({ type: 'START_FINALE' }));
-    }
-  };
-
-  const handleNextFinaleQuestion = () => {
-    const nextIdx = finaleQuestionIdx + 1;
-    if (gameMode === 'OFFLINE') {
-      setFinaleQuestionIdx(nextIdx);
-      setGameState('GRAND_FINALE');
-      startOfflineFinaleBotsSimulation();
-    } else {
-      if (socketRef.current) {
-        socketRef.current.send(JSON.stringify({ type: 'NEXT_QUESTION', questionIndex: 9 + nextIdx }));
-      }
-    }
-  };
-
-  const handleFinishGame = () => {
-    if (gameMode === 'OFFLINE') {
-      setGameState('FINAL_LEADERBOARD');
-    } else {
-      if (socketRef.current) {
-        socketRef.current.send(JSON.stringify({ type: 'FINISH_GAME' }));
-      }
-    }
-  };
-
-  const handlePlayerSubmitDuoAnswer = (key) => {
-    if (hasAnswered) return;
-    setTempSelectedAnswer(key);
-  };
-
-  const handleConfirmDuoAnswer = () => {
-    if (!tempSelectedAnswer || hasAnswered) return;
-    setHasAnswered(true);
-    setSelectedAnswer(tempSelectedAnswer);
-
-    const correctKey = activeQuestion.correctKey;
-    const isCorrect = tempSelectedAnswer === correctKey;
-    setIsCorrectAns(isCorrect);
-    
-    // For Vòng 3 (Team), points are +150 / -100
-    const points = isCorrect ? 150 : -100;
-    
-    if (gameMode === 'ONLINE') {
-      if (socketRef.current) {
-        socketRef.current.send(JSON.stringify({ 
-          type: 'SUBMIT_ANSWER', 
-          isCorrect, 
-          timeRemaining: timer
-        }));
-      }
-    }
-    setTempSelectedAnswer(null);
-  };
-
-  const handleSendChat = () => {
-    if (!chatInput.trim()) return;
-    setChatMessages(prev => [...prev, { sender: playerName, text: chatInput }]);
-    
-    if (gameMode === 'ONLINE') {
-      if (socketRef.current) {
-        socketRef.current.send(JSON.stringify({ 
-          type: 'SEND_TEAM_CHAT', 
-          text: chatInput 
-        }));
-      }
-    } else {
-      const botResponse = CHAT_BOT_PHRASES[Math.floor(Math.random() * CHAT_BOT_PHRASES.length)];
-      setTimeout(() => {
-        setChatMessages(prev => [...prev, { sender: myTeammate, text: botResponse }]);
-      }, 1000 + Math.random() * 1500);
-    }
-    setChatInput('');
-  };
-
-  const startOfflineChaosBotsSimulation = () => {
-    let startTime = Date.now();
-    clearInterval(simulationIntervalRef.current);
-    simulationIntervalRef.current = setInterval(() => {
-      const elapsed = (Date.now() - startTime) / 1000;
-      if (elapsed >= 45) {
-        clearInterval(simulationIntervalRef.current);
-        return;
-      }
-      setLeaderboard((prev) => {
-        const updated = prev.map((p) => {
-          if (Math.random() > 0.6) {
-            const isCorrect = Math.random() > 0.35;
-            const pts = isCorrect ? Math.round(100 + Math.random() * 50) : -50;
-            const newS = p.score + pts;
-            return { ...p, score: newS < 0 ? 0 : newS, answeredCount: p.answeredCount + 1 };
-          }
-          return p;
-        });
-        return updated.sort((a, b) => b.score - a.score);
-      });
-    }, 400);
-  };
-
-  const startOfflineBranchBattleSimulation = () => {
-    let startTime = Date.now();
-    clearInterval(simulationIntervalRef.current);
-    simulationIntervalRef.current = setInterval(() => {
-      const elapsed = (Date.now() - startTime) / 1000;
-      if (elapsed >= 45) {
-        clearInterval(simulationIntervalRef.current);
-        return;
-      }
-      setLeaderboard((prev) => {
-        const updated = prev.map((p) => {
-          if (p.activeBranch !== 'ELIMINATED' && Math.random() > 0.6) {
-            const isCorrect = Math.random() > 0.3;
-            const pts = isCorrect ? Math.round(100 + Math.random() * 50) : -50;
-            const newS = p.score + pts;
-            return { ...p, score: newS < 0 ? 0 : newS, answeredCount: p.answeredCount + 1 };
-          }
-          return p;
-        });
-        return updated.sort((a, b) => b.score - a.score);
-      });
-    }, 400);
-  };
-
-  const startOfflineTeamBotsSimulation = () => {
-    clearInterval(simulationIntervalRef.current);
-    let question = QUESTIONS[6 + teamQuestionIdx];
-
-    simulationIntervalRef.current = setInterval(() => {
-      if (Math.random() > 0.65 && teams.length > 0) {
-        const selectedTeam = teams[Math.floor(Math.random() * teams.length)];
-        const sender = Math.random() > 0.5 ? selectedTeam.p1 : selectedTeam.p2;
-        const phrase = CHAT_BOT_PHRASES[Math.floor(Math.random() * CHAT_BOT_PHRASES.length)];
-        
-        if (sender) {
-          setClassChats(prev => [...prev, { teamName: selectedTeam.name, sender, text: phrase }]);
-        }
-      }
-    }, 2000);
-
-    teams.forEach((t) => {
-      const delay = 3000 + Math.random() * 9000;
-      setTimeout(() => {
-        setGameState((current) => {
-          if (current === 'TEAM_DUO_ROUND') {
-            const isCorrect = Math.random() > 0.35;
-            const pts = isCorrect ? Math.round(150 + Math.random() * 50) : -100;
-            
-            setTeams(prev => prev.map(team => {
-              if (team.id === t.id) {
-                const nextScore = team.score + pts;
-                return { ...team, score: nextScore < 0 ? 0 : nextScore };
-              }
-              return team;
-            }));
-          }
-          return current;
-        });
-      }, delay);
+    connectWebSocket((ws) => {
+      ws.send(JSON.stringify({ 
+        type: 'JOIN_ROOM', 
+        roomCode: trimmedCode, 
+        playerName: trimmedName,
+        avatar: selectedMascot.emoji
+      }));
     });
   };
 
-  const startOfflineFinaleBotsSimulation = () => {
-    clearInterval(simulationIntervalRef.current);
-    
-    leaderboard.forEach((bot) => {
-      if (bot.activeBranch === 'WINNERS') {
-        const delay = 1000 + Math.random() * 9000;
-        setTimeout(() => {
-          setGameState((current) => {
-            if (current === 'GRAND_FINALE') {
-              setLeaderboard((prev) => {
-                const updated = prev.map((p) => {
-                  if (p.name === bot.name) {
-                    const isCorrect = Math.random() > 0.4;
-                    const pts = isCorrect ? Math.round(200 + Math.random() * 100) : -100;
-                    const nextS = p.score + pts;
-                    return { ...p, score: nextS < 0 ? 0 : nextS };
-                  }
-                  return p;
-                });
-                return updated.sort((a, b) => b.score - a.score);
-              });
-            }
-            return current;
-          });
-        }, delay);
+  // Host Starts Game via WebSocket
+  const handleStartGame = () => {
+    safeSendSocketMessage({ type: 'START_GAME' });
+  };
+
+  // Line Selection Logic
+  const calculatePath = (start, end) => {
+    if (!start || !end) return [];
+    const dr = end.r - start.r;
+    const dc = end.c - start.c;
+    const absR = Math.abs(dr);
+    const absC = Math.abs(dc);
+
+    if (dr !== 0 && dc !== 0 && absR !== absC) return [start];
+
+    const stepR = dr === 0 ? 0 : dr / absR;
+    const stepC = dc === 0 ? 0 : dc / absC;
+    const steps = Math.max(absR, absC);
+
+    const path = [];
+    for (let i = 0; i <= steps; i++) {
+      path.push({ r: start.r + stepR * i, c: start.c + stepC * i });
+    }
+    return path;
+  };
+
+  const handleCellMouseDown = (r, c) => {
+    setIsSelecting(true);
+    setStartCell({ r, c });
+    setSelectedPath([{ r, c }]);
+  };
+
+  const handleCellMouseEnter = (r, c) => {
+    if (!isSelecting || !startCell) return;
+    const path = calculatePath(startCell, { r, c });
+    setSelectedPath(path);
+  };
+
+  const handleMouseUp = () => {
+    if (!isSelecting) return;
+    setIsSelecting(false);
+    if (selectedPath.length === 0) return;
+
+    const selectedString = selectedPath.map((pos) => grid[pos.r]?.[pos.c]).join('');
+    const reversedString = selectedString.split('').reverse().join('');
+
+    const matchedIndex = targetWords.findIndex(
+      (tw) => !tw.found && (tw.word === selectedString || tw.word === reversedString)
+    );
+
+    if (matchedIndex !== -1) {
+      const foundWordObj = targetWords[matchedIndex];
+      const pointsGained = 120;
+
+      const updatedWords = [...targetWords];
+      updatedWords[matchedIndex].found = true;
+      setTargetWords(updatedWords);
+
+      const newScore = score + pointsGained;
+      setScore(newScore);
+
+      setActiveDefinition(foundWordObj);
+      triggerFloatingBubble(selectedMascot.emoji, `${playerName.trim() || 'Bạn'} (Bạn)`, foundWordObj.display);
+
+      safeSendSocketMessage({
+        type: 'FOUND_WORD',
+        word: foundWordObj.word,
+        points: pointsGained
+      });
+
+      // Check win
+      const allFound = updatedWords.every((w) => w.found);
+      if (allFound) {
+        setTimerActive(false);
+        setTimeout(() => setGameState('FINISHED'), 800);
       }
-    });
-  };
-
-  const handlePlayerSubmitChaosAnswer = (key) => {
-    setTempSelectedAnswer(key);
-  };
-
-  const handleConfirmChaosAnswer = () => {
-    if (!tempSelectedAnswer) return;
-    const correctKey = activeQuestion.correctKey;
-    const isCorrect = tempSelectedAnswer === correctKey;
-    let points = isCorrect ? 100 : -50;
-    
-    if (isCorrect) {
-      points += Math.round((timer / 45) * 50);
-    }
-    
-    const nextScore = score + points;
-    setScore(nextScore < 0 ? 0 : nextScore);
-    setPointsGained(points);
-    setIsCorrectAns(isCorrect);
-    
-    if (gameMode === 'ONLINE' && socketRef.current) {
-      socketRef.current.send(JSON.stringify({ 
-        type: 'SUBMIT_ANSWER', 
-        isCorrect, 
-        timeRemaining: timer
-      }));
     }
 
-    const nextCount = answeredInRound + 1;
-    setAnsweredInRound(nextCount);
-    setTempSelectedAnswer(null);
-
-    if (nextCount < 6) {
-      const nextQIdx = (chaosQuestionIdx + 1) % 6; 
-      setChaosQuestionIdx(nextQIdx);
-    }
+    setSelectedPath([]);
+    setStartCell(null);
   };
 
-  const handlePlayerSubmitFinaleAnswer = (key) => {
-    if (hasAnswered) return;
-    setTempSelectedAnswer(key);
+  const isCellSelected = (r, c) => selectedPath.some((pos) => pos.r === r && pos.c === c);
+
+  const getCellFoundColor = (r, c) => {
+    for (let tw of targetWords) {
+      if (tw.found && tw.positions.some((pos) => pos.r === r && pos.c === c)) {
+        return tw.color;
+      }
+    }
+    return null;
   };
 
-  const handleConfirmFinaleAnswer = () => {
-    if (!tempSelectedAnswer || hasAnswered) return;
-    setHasAnswered(true);
-    setSelectedAnswer(tempSelectedAnswer);
+  const handleUseHint = () => {
+    if (hintsLeft <= 0) return;
+    const unfound = targetWords.filter((w) => !w.found);
+    if (unfound.length === 0) return;
 
-    const correctKey = activeQuestion.correctKey;
-    const isCorrect = tempSelectedAnswer === correctKey;
-    setIsCorrectAns(isCorrect);
-    
-    const points = isCorrect ? 200 : -100;
-    const nextScore = score + points;
-    setScore(nextScore < 0 ? 0 : nextScore);
-    setPointsGained(points);
-
-    if (gameMode === 'ONLINE' && socketRef.current) {
-      socketRef.current.send(JSON.stringify({ 
-        type: 'SUBMIT_ANSWER', 
-        isCorrect, 
-        timeRemaining: timer
-      }));
-    }
-    setTempSelectedAnswer(null);
+    const randomWord = unfound[Math.floor(Math.random() * unfound.length)];
+    setHintedPos(randomWord.positions[0]);
+    setHintsLeft((h) => h - 1);
+    setTimeout(() => setHintedPos(null), 3000);
   };
 
   const resetToRoleSelection = () => {
-    clearInterval(timerIntervalRef.current);
-    clearInterval(simulationIntervalRef.current);
     if (socketRef.current) {
-      socketRef.current.close();
-      socketRef.current = null;
+      try { socketRef.current.close(); } catch(e){}
     }
     setGameState('ROLE_SELECTION');
-    setPlayers([]);
-    setRoomCode('');
-    setScore(0);
-    setHasAnswered(false);
-    setSelectedAnswer(null);
-    setTempSelectedAnswer(null);
-    setAnsweredInRound(0);
-    setConnectionError('');
-    setActiveBranch('WINNERS');
-    setTeams([]);
-    setMyTeamId(null);
-    setMyTeammate(null);
-    setChatMessages([]);
-    setClassChats([]);
+    setIsHost(false);
+    setShowRuleModal(false);
+    setActiveDefinition(null);
+    setSelectedPath([]);
+    setIsSelecting(false);
   };
 
-  const activeQuestion = gameState === 'CHAOS_ROUND' || gameState === 'BRANCH_BATTLE' 
-    ? QUESTIONS[chaosQuestionIdx] 
-    : gameState === 'TEAM_DUO_ROUND' 
-      ? QUESTIONS[6 + teamQuestionIdx]
-      : gameState === 'GRAND_FINALE'
-        ? QUESTIONS[9 + finaleQuestionIdx]
-        : null;
+  const formatTime = (sec) => {
+    const mins = Math.floor(sec / 60);
+    const secs = sec % 60;
+    return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
 
   return (
-    <section id="tro-choi" className="page-section" style={{
-      background: 'radial-gradient(circle at center, #0d1117 0%, #030406 100%)',
-      position: 'relative',
-      overflow: 'hidden',
-      minHeight: '100vh',
-      color: '#e2e8f0',
-      fontFamily: 'var(--font-sans)'
-    }}>
-      {/* Star backdrop rotate - colored in neon cyan for sci-fi look */}
+    <section 
+      onMouseUp={handleMouseUp}
+      onTouchEnd={handleMouseUp}
+      style={{
+        background: 'radial-gradient(circle at center, #0d1117 0%, #030406 100%)',
+        position: 'relative',
+        overflow: 'hidden',
+        minHeight: '100vh',
+        color: '#e2e8f0',
+        fontFamily: 'var(--font-sans)',
+        paddingBottom: '60px',
+        userSelect: 'none'
+      }}
+    >
+      {/* Star Backdrop */}
       <div style={{
         position: 'absolute',
         top: '50%',
@@ -913,1677 +615,550 @@ export default function GamePlaceholder() {
         opacity: 0.04,
         pointerEvents: 'none'
       }} className="drum-rotate">
-        <DongSonStar size={600} color="#00f0ff" />
+        <DongSonStar size={650} color="#00f0ff" />
       </div>
 
-      {/* Futuristic glow elements */}
-      <div style={{
-        position: 'absolute',
-        top: '-10%',
-        left: '10%',
-        width: '350px',
-        height: '350px',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(0, 240, 255, 0.08) 0%, transparent 70%)',
-        pointerEvents: 'none'
-      }} />
-      <div style={{
-        position: 'absolute',
-        bottom: '-10%',
-        right: '10%',
-        width: '400px',
-        height: '400px',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(138, 43, 226, 0.08) 0%, transparent 70%)',
-        pointerEvents: 'none'
-      }} />
+      <div className="container" style={{ position: 'relative', zIndex: 10, padding: '30px 20px', maxWidth: '1200px' }}>
 
-      <div className="container" style={{ position: 'relative', zIndex: 10, padding: '40px 20px' }}>
-
-        {/* If player is eliminated and it's not the lobby or podium phase */}
-        {!isHost && activeBranch === 'ELIMINATED' && gameState !== 'ROLE_SELECTION' && gameState !== 'FINAL_LEADERBOARD' ? (
-          <div className="premium-card" style={{
-            backgroundColor: 'rgba(15, 20, 35, 0.85)',
-            border: '1px solid rgba(255, 83, 83, 0.25)',
-            maxWidth: '650px',
-            margin: '50px auto',
-            padding: '45px 30px',
-            textAlign: 'center',
+        {/* Toast Notification */}
+        {latestToast && (
+          <div style={{
+            position: 'fixed',
+            top: '25px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'rgba(0, 240, 255, 0.95)',
+            color: '#090a0f',
+            padding: '12px 24px',
+            borderRadius: '30px',
+            fontWeight: 'bold',
+            boxShadow: '0 0 25px rgba(0, 240, 255, 0.5)',
+            zIndex: 10000,
             display: 'flex',
-            flexDirection: 'column',
-            gap: '20px'
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '0.92rem',
+            pointerEvents: 'none',
+            animation: 'fadeIn 0.3s ease-out'
           }}>
-            <Skull size={50} color="#ff5353" style={{ alignSelf: 'center' }} />
-            <h3 style={{ fontSize: '1.6rem', fontFamily: 'var(--font-title)', color: '#ff5353', letterSpacing: '1px' }}>
-              BẠN ĐÃ BỊ LOẠI!
-            </h3>
-            <p style={{ fontSize: '1rem', color: '#e2e8f0' }}>
-              Đấu thủ: <strong>{playerName}</strong> | Điểm số đạt được: <strong style={{ color: '#ffc75f' }}>{score} pts</strong>
-            </p>
-            <div style={{
-              padding: '15px',
-              backgroundColor: 'rgba(255, 83, 83, 0.05)',
-              borderRadius: '8px',
-              fontSize: '0.9rem',
-              color: '#cbd5e1',
-              lineHeight: '1.6',
-              border: '1px solid rgba(255, 83, 83, 0.1)'
-            }}>
-              Bạn đã dừng chân tại giải đấu này. Bạn hiện đang ở <strong>Chế độ Quan sát (Spectator Mode)</strong>. 
-              Hãy tiếp tục theo dõi diễn biến giải đấu trên màn chiếu lớn của Host!
-            </div>
-            
-            <button onClick={resetToRoleSelection} className="btn-secondary" style={{
-              alignSelf: 'center',
-              padding: '10px 24px',
-              border: '1.5px solid #ff5353',
-              backgroundColor: 'transparent',
-              color: '#ff5353',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}>
-              Rời phòng đấu
-            </button>
+            <Sparkles size={18} /> {latestToast}
           </div>
-        ) : (
-          <>
-            {/* ROLE_SELECTION */}
-            {gameState === 'ROLE_SELECTION' && (
-              <div>
-                <a href="#" style={{
+        )}
+
+        {/* Real-time Floating Word Discovery Bubbles (Bottom-to-Top Animation) */}
+        <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 9999, overflow: 'hidden' }}>
+          {floatingBubbles.map((b) => (
+            <div
+              key={b.id}
+              className="floating-bubble"
+              style={{
+                left: b.left,
+                backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                border: '1.5px solid #00f0ff',
+                borderRadius: '25px',
+                padding: '10px 22px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '10px',
+                color: '#ffffff',
+                fontWeight: 'bold',
+                fontSize: '0.92rem',
+                boxShadow: '0 8px 30px rgba(0, 240, 255, 0.4)'
+              }}
+            >
+              <span style={{ fontSize: '1.6rem' }}>{b.avatar}</span>
+              <span>
+                <strong style={{ color: '#00f0ff' }}>{b.name}</strong> đã tìm thấy{' '}
+                <span style={{ color: '#ffd700', textDecoration: 'underline' }}>{b.word}</span>! ✨
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Screen 1: ROLE SELECTION */}
+        {gameState === 'ROLE_SELECTION' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '35px' }}>
+              <a href="#" style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                textDecoration: 'none',
+                color: '#00f0ff',
+                fontWeight: 'bold',
+                fontSize: '0.9rem'
+              }}>
+                <ArrowLeft size={16} /> Quay lại trang chủ học tập
+              </a>
+
+              <button 
+                onClick={() => setShowRuleModal(true)}
+                style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '6px',
-                  textDecoration: 'none',
+                  gap: '8px',
+                  padding: '8px 18px',
+                  backgroundColor: 'rgba(0, 240, 255, 0.12)',
+                  border: '1px solid rgba(0, 240, 255, 0.4)',
+                  borderRadius: '20px',
                   color: '#00f0ff',
+                  fontSize: '0.85rem',
                   fontWeight: 'bold',
-                  fontSize: '0.9rem',
-                  marginBottom: '35px',
-                  fontFamily: 'var(--font-sans)',
-                  transition: 'color 0.2s'
-                }}>
-                  <ArrowLeft size={16} /> Quay lại trang chủ học tập
-                </a>
+                  cursor: 'pointer'
+                }}
+              >
+                <BookOpen size={16} /> Hướng Dẫn Luật Chơi Ô Chữ
+              </button>
+            </div>
 
-                <div className="section-title-wrapper" style={{ textAlign: 'center', marginBottom: '40px' }}>
-                  <p className="section-subtitle" style={{ color: '#00f0ff', letterSpacing: '2px', textTransform: 'uppercase' }}>COSMIC ARENA</p>
-                  <h2 className="section-title" style={{ color: '#ffffff', textShadow: '0 0 15px rgba(255,255,255,0.1)' }}>Đấu Trường Đỉnh Cao</h2>
-                </div>
+            <div style={{ textAlign: 'center', marginBottom: '35px' }}>
+              <p style={{ color: '#00f0ff', letterSpacing: '2px', textTransform: 'uppercase', fontSize: '0.85rem', fontWeight: 'bold' }}>COSMIC ARENA</p>
+              <h2 style={{ fontSize: '2.2rem', fontFamily: 'var(--font-title)', color: '#ffffff' }}>Ô Chữ Liêm Chính - Thách Thức Cá Nhân</h2>
+            </div>
 
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '30px',
-                  maxWidth: '850px',
-                  margin: '0 auto'
-                }} className="grid-2-cols">
-                  
-                  {/* Host Box */}
-                  <div className="premium-card" style={{
-                    backgroundColor: 'rgba(15, 20, 35, 0.8)',
-                    border: '1px solid rgba(0, 240, 255, 0.2)',
-                    textAlign: 'center',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '20px',
-                    padding: '40px'
-                  }}>
-                    <Trophy size={40} color="#ffd700" style={{ alignSelf: 'center' }} />
-                    <h3 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-title)', color: '#ffffff' }}>
-                      Người thuyết trình (Host)
-                    </h3>
-                    <p style={{ fontSize: '0.9rem', color: '#cbd5e1', lineHeight: '1.5' }}>
-                      Hiển thị sơ đồ phân nhánh và trực quan hóa các đoạn chat đồng đội trên màn chiếu lớn.
-                    </p>
-
-                    <div style={{ 
-                      display: 'flex', 
-                      gap: '10px', 
-                      justifyContent: 'center', 
-                      backgroundColor: 'rgba(9, 10, 15, 0.6)', 
-                      padding: '6px', 
-                      borderRadius: '8px' 
-                    }}>
-                      <button 
-                        onClick={() => setGameMode('OFFLINE')}
-                        style={{
-                          flex: 1,
-                          border: 'none',
-                          borderRadius: '6px',
-                          padding: '8px 12px',
-                          fontSize: '0.75rem',
-                          fontWeight: 'bold',
-                          cursor: 'pointer',
-                          backgroundColor: gameMode === 'OFFLINE' ? '#00f0ff' : 'transparent',
-                          color: gameMode === 'OFFLINE' ? '#090a0f' : '#cbd5e1',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        Giả lập (Offline)
-                      </button>
-                      <button 
-                        onClick={() => setGameMode('ONLINE')}
-                        style={{
-                          flex: 1,
-                          border: 'none',
-                          borderRadius: '6px',
-                          padding: '8px 12px',
-                          fontSize: '0.75rem',
-                          fontWeight: 'bold',
-                          cursor: 'pointer',
-                          backgroundColor: gameMode === 'ONLINE' ? '#00f0ff' : 'transparent',
-                          color: gameMode === 'ONLINE' ? '#090a0f' : '#cbd5e1',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        Kết nối mạng (Online)
-                      </button>
-                    </div>
-
-                    <span style={{ fontSize: '0.75rem', color: '#ff5353', fontStyle: 'italic', fontWeight: 600 }}>
-                      {gameMode === 'OFFLINE' ? '* Hỗ trợ 20 đấu thủ giả lập (bots) vượt qua các vòng.' : '* Yêu cầu chạy "node ws-server.js" trước.'}
-                    </span>
-
-                    <button onClick={handleHostCreateRoom} className="btn-primary" style={{
-                      width: '100%',
-                      padding: '14px',
-                      marginTop: '10px',
-                      backgroundColor: '#00f0ff',
-                      color: '#090a0f',
-                      border: 'none',
-                      fontWeight: 'bold',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px'
-                    }}>
-                      <Play size={16} />
-                      Tạo phòng thi đấu
-                    </button>
-                  </div>
-
-                  {/* Player Box */}
-                  <div className="premium-card" style={{
-                    backgroundColor: 'rgba(15, 20, 35, 0.8)',
-                    border: '1px solid rgba(0, 240, 255, 0.2)',
-                    textAlign: 'center',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '20px',
-                    padding: '40px'
-                  }}>
-                    <UserCheck size={40} color="#00f0ff" style={{ alignSelf: 'center' }} />
-                    <h3 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-title)', color: '#ffffff' }}>
-                      Sinh viên tham gia (Player)
-                    </h3>
-                    <p style={{ fontSize: '0.9rem', color: '#cbd5e1', lineHeight: '1.5' }}>
-                      Ghép cặp để chat thảo luận và đấu 1v1 tìm kiếm nhà vô địch liêm chính.
-                    </p>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left' }}>
-                      <input
-                        type="text"
-                        placeholder="Tên của bạn..."
-                        value={playerName}
-                        onChange={(e) => setPlayerName(e.target.value)}
-                        style={{
-                          padding: '12px',
-                          borderRadius: '6px',
-                          border: '1px solid rgba(0, 240, 255, 0.3)',
-                          backgroundColor: 'rgba(9, 10, 15, 0.8)',
-                          color: '#ffffff',
-                          fontFamily: 'var(--font-sans)',
-                          fontSize: '0.9rem',
-                          outline: 'none'
-                        }}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Mã phòng..."
-                        value={roomCode}
-                        onChange={(e) => setRoomCode(e.target.value)}
-                        style={{
-                          padding: '12px',
-                          borderRadius: '6px',
-                          border: '1px solid rgba(0, 240, 255, 0.3)',
-                          backgroundColor: 'rgba(9, 10, 15, 0.8)',
-                          color: '#ffffff',
-                          fontFamily: 'var(--font-sans)',
-                          fontSize: '0.9rem',
-                          outline: 'none'
-                        }}
-                      />
-                    </div>
-
-                    <button onClick={handlePlayerJoinRoom} className="btn-secondary" style={{
-                      width: '100%',
-                      padding: '14px',
-                      border: '1.5px solid #00f0ff',
-                      backgroundColor: 'transparent',
-                      color: '#00f0ff',
-                      fontWeight: 'bold',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px'
-                    }}>
-                      <ArrowRight size={16} />
-                      Vào phòng thi đấu
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* HOST_LOBBY */}
-            {gameState === 'HOST_LOBBY' && (
+            {/* Role Box Selection */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.15fr', gap: '30px', maxWidth: '950px', margin: '0 auto', alignItems: 'stretch' }}>
+              
+              {/* Host Card */}
               <div className="premium-card" style={{
-                backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                border: '1px solid rgba(0, 240, 255, 0.2)',
-                maxWidth: '750px',
-                margin: '0 auto',
-                padding: '40px',
+                backgroundColor: 'rgba(15, 20, 35, 0.8)',
+                border: '1px solid rgba(0, 240, 255, 0.25)',
                 textAlign: 'center',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '25px'
+                justifyContent: 'space-between',
+                gap: '22px',
+                padding: '30px'
               }}>
-                <button onClick={resetToRoleSelection} style={{
-                  alignSelf: 'start',
-                  border: 'none',
-                  background: 'none',
-                  cursor: 'pointer',
-                  color: '#cbd5e1',
-                  fontSize: '0.85rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}>
-                  <ArrowLeft size={16} /> Thoát
-                </button>
-
-                <div>
-                  <span style={{ fontSize: '0.85rem', color: '#00f0ff', fontWeight: 'bold', letterSpacing: '1px' }}>
-                    {gameMode === 'OFFLINE' ? 'ĐẤU TRƯỜNG GIẢ LẬP (20 ĐẤU THỦ)' : 'ĐẤU TRƯỜNG MẠNG (ONLINE)'}
-                  </span>
-                  <h3 style={{ fontSize: '1.6rem', fontFamily: 'var(--font-title)', marginTop: '5px', color: '#ffffff' }}>
-                    SẴN SÀNG KHỞI CHIẾN
-                  </h3>
-                </div>
-
-                <div style={{
-                  backgroundColor: 'rgba(9, 10, 15, 0.7)',
-                  border: '1px solid rgba(0, 240, 255, 0.15)',
-                  padding: '20px',
-                  borderRadius: '8px',
-                  display: 'inline-block',
-                  margin: '0 auto'
-                }}>
-                  <span style={{ fontSize: '0.8rem', color: '#cbd5e1', display: 'block', marginBottom: '5px' }}>
-                    MÃ PHÒNG CHƠI:
-                  </span>
-                  <strong style={{ fontSize: '2.5rem', letterSpacing: '4px', color: '#00f0ff', fontFamily: 'var(--font-title)' }}>
-                    {roomCode}
-                  </strong>
-                </div>
-
-                <div>
-                  <span style={{ fontSize: '0.95rem', fontWeight: 600, display: 'block', marginBottom: '15px' }}>
-                    Sĩ số: {players.length} / 20 đấu thủ
-                  </span>
-
-                  <div style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '10px',
-                    justifyContent: 'center',
-                    maxHeight: '180px',
-                    overflowY: 'auto',
-                    padding: '15px',
-                    backgroundColor: 'rgba(9, 10, 15, 0.5)',
-                    borderRadius: '8px'
-                  }}>
-                    {players.map((p, i) => (
-                      <span key={i} style={{
-                        backgroundColor: 'rgba(0, 240, 255, 0.08)',
-                        border: '1px solid rgba(0, 240, 255, 0.2)',
-                        padding: '8px 15px',
-                        borderRadius: '20px',
-                        fontSize: '0.85rem',
-                        fontWeight: 600,
-                        color: '#ffffff'
-                      }}>
-                        {p.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleStartChaosRound}
-                  style={{
-                    alignSelf: 'center',
-                    padding: '14px 40px',
-                    backgroundColor: '#00f0ff',
-                    color: '#090a0f',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <Play size={16} /> Bắt đầu hỗn chiến
-                </button>
-              </div>
-            )}
-
-            {/* PLAYER_LOBBY */}
-            {gameState === 'PLAYER_LOBBY' && (
-              <div className="premium-card" style={{
-                backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                border: '1px solid rgba(0, 240, 255, 0.2)',
-                maxWidth: '600px',
-                margin: '0 auto',
-                padding: '40px',
-                textAlign: 'center',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '20px'
-              }}>
-                <button onClick={resetToRoleSelection} style={{
-                  alignSelf: 'start',
-                  border: 'none',
-                  background: 'none',
-                  cursor: 'pointer',
-                  color: '#cbd5e1',
-                  fontSize: '0.85rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}>
-                  <ArrowLeft size={16} /> Rời phòng
-                </button>
-
-                <h3 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-title)', color: '#ffffff' }}>
-                  ĐÃ VÀO PHÒNG CHỜ
-                </h3>
-                <p style={{ fontSize: '0.95rem', color: '#cbd5e1' }}>
-                  Đấu thủ: <strong>{playerName}</strong> | Phòng: <strong>{roomCode}</strong>
-                </p>
-                <div style={{
-                  padding: '15px',
-                  backgroundColor: 'rgba(0, 240, 255, 0.05)',
-                  border: '1px solid rgba(0, 240, 255, 0.15)',
-                  borderRadius: '6px',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  color: '#00f0ff'
-                }}>
-                  Đang chờ Host kích hoạt Vòng 1: Hỗn Chiến...
-                </div>
-              </div>
-            )}
-
-            {/* CHAOS_ROUND */}
-            {gameState === 'CHAOS_ROUND' && (
-              <div style={{ maxWidth: '950px', margin: '0 auto' }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '20px'
-                }}>
-                  <div>
-                    <span className="lacquer-badge" style={{ backgroundColor: '#00f0ff', color: '#090a0f', marginRight: '10px', fontWeight: 'bold' }}>
-                      Vòng 1: Hỗn Chiến 20 Người
-                    </span>
-                    <span style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>
-                      Đúng: +100 | Sai: -50 (Trả lời liên tục)
-                    </span>
-                  </div>
-
-                  <div style={{
-                    width: '60px',
-                    height: '40px',
-                    backgroundColor: 'rgba(0, 240, 255, 0.12)',
-                    border: '1px solid rgba(0, 240, 255, 0.3)',
-                    color: '#00f0ff',
-                    borderRadius: '6px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 'bold',
-                    fontSize: '1.1rem'
-                  }}>
-                    {timer}s
-                  </div>
-                </div>
-
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1.2fr 0.8fr',
-                  gap: '30px'
-                }} className="grid-2-cols">
-                  
-                  {/* Game Area */}
-                  <div>
-                    {isHost ? (
-                      <div className="premium-card" style={{
-                        backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                        border: '1px solid rgba(0, 240, 255, 0.2)',
-                        padding: '30px',
-                        textAlign: 'center'
-                      }}>
-                        <h3 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-title)', color: '#00f0ff' }}>
-                          ĐẠI CHIẾN PHÂN HẠNG!
-                        </h3>
-                        <p style={{ fontSize: '0.9rem', color: '#cbd5e1', marginTop: '10px', lineHeight: '1.5' }}>
-                          Các đấu thủ đang tự do trả lời các câu hỏi.
-                        </p>
-                        <div style={{ marginTop: '20px', opacity: 0.8 }}>
-                          <DongSonStar size={120} color="#00f0ff" className="drum-rotate" />
-                        </div>
-                      </div>
-                    ) : (
-                      answeredInRound >= 6 ? (
-                        <div className="premium-card" style={{
-                          backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                          border: '1px solid rgba(0, 240, 255, 0.2)',
-                          padding: '40px 30px',
-                          textAlign: 'center',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '15px'
-                        }}>
-                          <Radio size={40} color="#00f0ff" style={{ alignSelf: 'center' }} className="pulse" />
-                          <h3 style={{ fontSize: '1.3rem', color: '#ffffff', fontFamily: 'var(--font-title)' }}>
-                            BẠN ĐÃ HOÀN THÀNH PHẦN THI!
-                          </h3>
-                          <p style={{ fontSize: '0.95rem', color: '#cbd5e1', lineHeight: '1.6' }}>
-                            Đang chờ các đấu thủ khác hoàn thành bộ câu hỏi... Vui lòng theo dõi diễn biến giải đấu trên màn chiếu chính của Host.
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="premium-card" style={{
-                          backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                          border: '1px solid rgba(0, 240, 255, 0.2)',
-                          padding: '30px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '20px'
-                        }}>
-                          <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#00f0ff' }}>
-                            CÂU HỎI CUỐN CHIẾU CỦA BẠN (CÂU {chaosQuestionIdx + 1}/6)
-                          </div>
-                          <h3 style={{ fontSize: '1.15rem', fontFamily: 'var(--font-title)', lineHeight: '1.5', color: '#ffffff' }}>
-                            {QUESTIONS[chaosQuestionIdx].text}
-                          </h3>
-
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-                            {QUESTIONS[chaosQuestionIdx].options.map((opt) => {
-                              const isTempSelected = tempSelectedAnswer === opt.key;
-                              return (
-                                <button
-                                  key={opt.key}
-                                  onClick={() => handlePlayerSubmitChaosAnswer(opt.key)}
-                                  style={{
-                                    border: isTempSelected ? '1.5px solid #00f0ff' : '1px solid rgba(0, 240, 255, 0.2)',
-                                    padding: '15px 20px',
-                                    textAlign: 'left',
-                                    cursor: 'pointer',
-                                    backgroundColor: isTempSelected ? 'rgba(0, 240, 255, 0.12)' : 'rgba(9, 10, 15, 0.6)',
-                                    color: '#e2e8f0',
-                                    borderRadius: '8px',
-                                    display: 'flex',
-                                    gap: '10px',
-                                    alignItems: 'center',
-                                    fontFamily: 'var(--font-sans)',
-                                    transition: 'background-color 0.2s'
-                                  }}
-                                >
-                                  <strong style={{ color: '#00f0ff' }}>{opt.key}.</strong> {opt.text}
-                                </button>
-                              );
-                            })}
-                          </div>
-
-                          {tempSelectedAnswer && (
-                            <button
-                              onClick={handleConfirmChaosAnswer}
-                              style={{
-                                marginTop: '10px',
-                                padding: '12px 24px',
-                                border: 'none',
-                                backgroundColor: '#00f0ff',
-                                color: '#090a0f',
-                                fontWeight: 'bold',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '6px',
-                                borderRadius: '4px'
-                              }}
-                            >
-                              Xác nhận đáp án <ArrowRight size={16} />
-                            </button>
-                          )}
-                        </div>
-                      )
-                    )}
-                  </div>
-
-                  {/* Leaderboard */}
-                  <div className="premium-card" style={{
-                    backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                    border: '1px solid rgba(0, 240, 255, 0.2)',
-                    padding: '25px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '15px'
-                  }}>
-                    <div style={{ display: 'flex', justifyBetween: 'space-between', alignItems: 'center', width: '100%' }}>
-                      <h3 style={{ fontSize: '0.95rem', fontFamily: 'var(--font-title)', color: '#00f0ff' }}>
-                        BẢNG ĐIỂM TRỰC TIẾP
-                      </h3>
-                      {!isHost && (
-                        <span style={{ fontSize: '0.95rem', fontWeight: 'bold', color: '#ffc75f' }}>
-                          Điểm: {score} pts
-                        </span>
-                      )}
-                    </div>
-
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px',
-                      maxHeight: '320px',
-                      overflowY: 'auto'
-                    }}>
-                      {leaderboard.slice(0, 7).map((p, idx) => (
-                        <div key={idx} style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '8px 12px',
-                          backgroundColor: 'rgba(9, 10, 15, 0.6)',
-                          borderRadius: '6px',
-                          fontSize: '0.85rem',
-                          border: '1px solid rgba(0, 240, 255, 0.1)'
-                        }}>
-                          <span style={{ fontWeight: 600, color: '#ffffff' }}>
-                            #{idx + 1} {p.name}
-                          </span>
-                          <strong style={{ color: '#00f0ff' }}>{p.score} pts</strong>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                </div>
-
-                {isHost && (
-                  <button onClick={handleSplitBrackets} style={{
-                    margin: '35px auto 0 auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '12px 28px',
-                    backgroundColor: '#00f0ff',
-                    color: '#090a0f',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    cursor: 'pointer'
-                  }}>
-                    Kết thúc Vòng 1 & Phân Nhánh <ArrowRight size={16} />
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* BRACKET_SPLIT */}
-            {gameState === 'BRACKET_SPLIT' && (
-              <div style={{ maxWidth: '950px', margin: '0 auto' }}>
-                <div className="section-title-wrapper" style={{ textAlign: 'center', marginBottom: '30px' }}>
-                  <p className="section-subtitle" style={{ color: '#00f0ff' }}>PHÂN NHÁNH THI ĐẤU</p>
-                  <h2 className="section-title" style={{ color: '#ffffff' }}>Kết Quả Phân Nhánh Vòng 1</h2>
-                </div>
-
-                {!isHost && (
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '15px',
-                    borderRadius: '8px',
-                    backgroundColor: activeBranch === 'WINNERS' ? 'rgba(57, 224, 155, 0.08)' : 'rgba(255, 83, 83, 0.08)',
-                    color: activeBranch === 'WINNERS' ? '#39e09b' : '#ff5353',
-                    fontSize: '1rem',
-                    fontWeight: 'bold',
-                    border: activeBranch === 'WINNERS' ? '1px solid rgba(57, 224, 155, 0.15)' : '1px solid rgba(255, 83, 83, 0.15)',
-                    marginBottom: '30px'
-                  }}>
-                    {activeBranch === 'WINNERS' 
-                      ? 'BẠN VÀO NHÁNH THẮNG (WINNERS) - ĐẤU LẤY TOP 4 VÀO PHÒNG CHAT ĐỒNG ĐỘI!' 
-                      : 'BẠN RƠI XUỐNG NHÁNH THUA (LOSERS) - PHẢI ĐẤU LẤY TOP 2 ĐỂ HỒI SINH!'}
-                  </div>
-                )}
-
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '30px',
-                  marginBottom: '30px'
-                }} className="grid-2-cols">
-                  
-                  {/* Winners Bracket */}
-                  <div className="premium-card" style={{
-                    backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                    border: '1px solid rgba(57, 224, 155, 0.25)',
-                    padding: '30px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '15px'
-                  }}>
-                    <h3 style={{ fontSize: '1.1rem', fontFamily: 'var(--font-title)', color: '#39e09b' }}>
-                      🏆 NHÁNH THẮNG (WINNERS BRACKET)
-                    </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {leaderboard.filter(p => p.activeBranch === 'WINNERS').slice(0, 10).map((p, idx) => (
-                        <div key={idx} style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          padding: '8px 12px',
-                          backgroundColor: 'rgba(9, 10, 15, 0.6)',
-                          borderRadius: '6px',
-                          fontSize: '0.85rem',
-                          border: '1px solid rgba(57, 224, 155, 0.1)'
-                        }}>
-                          <span style={{ fontWeight: 600, color: '#ffffff' }}>#{idx + 1} {p.name}</span>
-                          <strong style={{ color: '#39e09b' }}>{p.score} pts</strong>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Losers Bracket */}
-                  <div className="premium-card" style={{
-                    backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                    border: '1px solid rgba(255, 83, 83, 0.25)',
-                    padding: '30px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '15px'
-                  }}>
-                    <h3 style={{ fontSize: '1.1rem', fontFamily: 'var(--font-title)', color: '#ff5353' }}>
-                      💀 NHÁNH THUA (LOSERS BRACKET)
-                    </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {leaderboard.filter(p => p.activeBranch === 'LOSERS').slice(0, 10).map((p, idx) => (
-                        <div key={idx} style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          padding: '8px 12px',
-                          backgroundColor: 'rgba(9, 10, 15, 0.6)',
-                          borderRadius: '6px',
-                          fontSize: '0.85rem',
-                          border: '1px solid rgba(255, 83, 83, 0.1)'
-                        }}>
-                          <span style={{ fontWeight: 600, color: '#ffffff' }}>#{idx + 11} {p.name}</span>
-                          <strong style={{ color: '#ff5353' }}>{p.score} pts</strong>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                </div>
-
-                {isHost && (
-                  <button onClick={handleStartBranchBattle} style={{
-                    margin: '0 auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '12px 28px',
-                    backgroundColor: '#00f0ff',
-                    color: '#090a0f',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    cursor: 'pointer'
-                  }}>
-                    Bắt đầu Trận Chiến Nhánh (Vòng 2) <ArrowRight size={16} />
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* BRANCH_BATTLE */}
-            {gameState === 'BRANCH_BATTLE' && (
-              <div style={{ maxWidth: '950px', margin: '0 auto' }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '20px'
-                }}>
-                  <div>
-                    <span className="lacquer-badge" style={{ backgroundColor: '#00f0ff', color: '#090a0f', marginRight: '10px', fontWeight: 'bold' }}>
-                      Vòng 2: Trận Chiến Nhánh
-                    </span>
-                    <span style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>
-                      Nhánh Thắng chọn Top 4 | Nhánh Thua hồi sinh Top 2!
-                    </span>
-                  </div>
-
-                  <div style={{
-                    width: '60px',
-                    height: '40px',
-                    backgroundColor: 'rgba(0, 240, 255, 0.12)',
-                    border: '1px solid rgba(0, 240, 255, 0.3)',
-                    color: '#00f0ff',
-                    borderRadius: '6px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 'bold',
-                    fontSize: '1.1rem'
-                  }}>
-                    {timer}s
-                  </div>
-                </div>
-
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1.2fr 0.8fr',
-                  gap: '30px'
-                }} className="grid-2-cols">
-                  
-                  {/* Game View */}
-                  <div>
-                    {isHost ? (
-                      <div className="premium-card" style={{
-                        backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                        border: '1px solid rgba(0, 240, 255, 0.2)',
-                        padding: '30px',
-                        textAlign: 'center'
-                      }}>
-                        <h3 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-title)', color: '#00f0ff' }}>
-                          SO GĂNG NỘI BỘ NHÁNH!
-                        </h3>
-                        <p style={{ fontSize: '0.9rem', color: '#cbd5e1', marginTop: '10px', lineHeight: '1.5' }}>
-                          Các đấu thủ đang nỗ lực đạt điểm số cao nhất để sinh tồn.
-                        </p>
-                        <div style={{ marginTop: '20px', opacity: 0.8 }}>
-                          <DongSonStar size={120} color="#00f0ff" className="drum-rotate" />
-                        </div>
-                      </div>
-                    ) : (
-                      answeredInRound >= 6 ? (
-                        <div className="premium-card" style={{
-                          backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                          border: '1px solid rgba(0, 240, 255, 0.2)',
-                          padding: '40px 30px',
-                          textAlign: 'center',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '15px'
-                        }}>
-                          <Radio size={40} color="#00f0ff" style={{ alignSelf: 'center' }} className="pulse" />
-                          <h3 style={{ fontSize: '1.3rem', color: '#ffffff', fontFamily: 'var(--font-title)' }}>
-                            BẠN ĐÃ HOÀN THÀNH PHẦN THI!
-                          </h3>
-                          <p style={{ fontSize: '0.95rem', color: '#cbd5e1', lineHeight: '1.6' }}>
-                            Đang chờ các đấu thủ khác hoàn thành bộ câu hỏi... Vui lòng theo dõi diễn biến giải đấu trên màn chiếu chính của Host.
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="premium-card" style={{
-                          backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                          border: '1px solid rgba(0, 240, 255, 0.2)',
-                          padding: '30px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '20px'
-                        }}>
-                          <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#00f0ff' }}>
-                            CÂU HỎI CUỐN CHIẾU CỦA BẠN (CÂU {chaosQuestionIdx + 1}/6)
-                          </div>
-                          <h3 style={{ fontSize: '1.15rem', fontFamily: 'var(--font-title)', lineHeight: '1.5', color: '#ffffff' }}>
-                            {QUESTIONS[chaosQuestionIdx].text}
-                          </h3>
-
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-                            {QUESTIONS[chaosQuestionIdx].options.map((opt) => {
-                              const isTempSelected = tempSelectedAnswer === opt.key;
-                              return (
-                                <button
-                                  key={opt.key}
-                                  onClick={() => handlePlayerSubmitChaosAnswer(opt.key)}
-                                  style={{
-                                    border: isTempSelected ? '1.5px solid #00f0ff' : '1px solid rgba(0, 240, 255, 0.2)',
-                                    padding: '15px 20px',
-                                    textAlign: 'left',
-                                    cursor: 'pointer',
-                                    backgroundColor: isTempSelected ? 'rgba(0, 240, 255, 0.12)' : 'rgba(9, 10, 15, 0.6)',
-                                    color: '#e2e8f0',
-                                    borderRadius: '8px',
-                                    display: 'flex',
-                                    gap: '10px',
-                                    alignItems: 'center',
-                                    fontFamily: 'var(--font-sans)',
-                                    transition: 'background-color 0.2s'
-                                  }}
-                                >
-                                  <strong style={{ color: '#00f0ff' }}>{opt.key}.</strong> {opt.text}
-                                </button>
-                              );
-                            })}
-                          </div>
-
-                          {tempSelectedAnswer && (
-                            <button
-                              onClick={handleConfirmChaosAnswer}
-                              style={{
-                                marginTop: '10px',
-                                padding: '12px 24px',
-                                border: 'none',
-                                backgroundColor: '#00f0ff',
-                                color: '#090a0f',
-                                fontWeight: 'bold',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '6px',
-                                borderRadius: '4px'
-                              }}
-                            >
-                              Xác nhận đáp án <ArrowRight size={16} />
-                            </button>
-                          )}
-                        </div>
-                      )
-                    )}
-                  </div>
-
-                  {/* Sidebar stats */}
-                  <div className="premium-card" style={{
-                    backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                    border: '1px solid rgba(0, 240, 255, 0.2)',
-                    padding: '25px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '15px'
-                  }}>
-                    <h3 style={{ fontSize: '0.95rem', fontFamily: 'var(--font-title)', color: '#00f0ff' }}>
-                      BẢNG ĐIỂM THEO NHÁNH
-                    </h3>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto' }}>
-                      {leaderboard.filter(p => p.activeBranch !== 'ELIMINATED').map((p, idx) => (
-                        <div key={idx} style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '8px 12px',
-                          backgroundColor: p.activeBranch === 'WINNERS' ? 'rgba(57, 224, 155, 0.05)' : 'rgba(255, 83, 83, 0.05)',
-                          borderRadius: '6px',
-                          fontSize: '0.85rem',
-                          border: p.activeBranch === 'WINNERS' ? '1px solid rgba(57, 224, 155, 0.1)' : '1px solid rgba(255, 83, 83, 0.1)'
-                        }}>
-                          <span style={{ fontWeight: 600, color: '#ffffff' }}>{p.name} ({p.activeBranch === 'WINNERS' ? 'Nhánh Thắng' : 'Nhánh Thua'})</span>
-                          <strong style={{ color: p.activeBranch === 'WINNERS' ? '#39e09b' : '#ff5353' }}>{p.score} pts</strong>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                </div>
-
-                {isHost && (
-                  <button onClick={handleProcessBranchBattle} style={{
-                    margin: '35px auto 0 auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '12px 28px',
-                    backgroundColor: '#00f0ff',
-                    color: '#090a0f',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    cursor: 'pointer'
-                  }}>
-                    Lọc Kết Quả Vòng 2 & Tạo Cặp Đấu <ArrowRight size={16} />
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* TEAM_LOBBY */}
-            {gameState === 'TEAM_LOBBY' && (
-              <div style={{ maxWidth: '950px', margin: '0 auto' }}>
-                <div className="section-title-wrapper" style={{ textAlign: 'center', marginBottom: '30px' }}>
-                  <p className="section-subtitle" style={{ color: '#00f0ff' }}>GHÉP CẶP CHIẾN THUẬT</p>
-                  <h2 className="section-title" style={{ color: '#ffffff' }}>Thiết Lập 3 Cặp Đấu Đồng Đội</h2>
-                </div>
-
-                {!isHost && (
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '15px',
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(0, 240, 255, 0.08)',
-                    color: '#00f0ff',
-                    fontSize: '1rem',
-                    fontWeight: 'bold',
-                    border: '1px solid rgba(0, 240, 255, 0.15)',
-                    marginBottom: '30px'
-                  }}>
-                    {`BẠN ĐÃ ĐƯỢC GHÉP VÀO: ${teams.find(t => t.p1 === playerName || t.p2 === playerName)?.name}! ĐỒNG ĐỘI: ${myTeammate}`}
-                  </div>
-                )}
-
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: '24px',
-                  marginBottom: '35px'
-                }} className="cards-grid">
-                  {teams.map((t, i) => (
-                    <div key={i} className="premium-card" style={{
-                      backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                      border: (t.p1 === playerName || t.p2 === playerName) ? '2px solid #ffd700' : '1px solid rgba(0, 240, 255, 0.2)',
-                      padding: '25px',
-                      borderRadius: '8px',
-                      textAlign: 'center',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '15px'
-                    }}>
-                      <span className="lacquer-badge" style={{ alignSelf: 'center', backgroundColor: '#00f0ff', color: '#090a0f', fontWeight: 'bold' }}>{t.name}</span>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: '10px 0', color: '#cbd5e1' }}>
-                        <div style={{ fontSize: '0.9rem' }}>Đồng đội 1: <strong style={{ color: '#ffffff' }}>{t.p1}</strong></div>
-                        <div style={{ fontSize: '0.9rem' }}>Đồng đội 2: <strong style={{ color: '#ffffff' }}>{t.p2}</strong></div>
-                      </div>
-                      <strong style={{ fontSize: '1.1rem', color: '#ffc75f' }}>Điểm nhóm: {t.score} pts</strong>
-                    </div>
-                  ))}
-                </div>
-
-                {isHost && (
-                  <button onClick={handleStartTeamDuoRound} style={{
-                    margin: '0 auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '12px 28px',
-                    backgroundColor: '#00f0ff',
-                    color: '#090a0f',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    cursor: 'pointer'
-                  }}>
-                    Bắt đầu Vòng Thảo Luận Đồng Đội (4 Phút) <ArrowRight size={16} />
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* TEAM_DUO_ROUND */}
-            {gameState === 'TEAM_DUO_ROUND' && (
-              <div style={{ maxWidth: '950px', margin: '0 auto' }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '20px'
-                }}>
-                  <div>
-                    <span className="lacquer-badge" style={{ backgroundColor: '#00f0ff', color: '#090a0f', marginRight: '10px', fontWeight: 'bold' }}>
-                      Vòng 3: Đồng Đội Tác Chiến (Câu {teamQuestionIdx + 1}/3)
-                    </span>
-                    <span style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>
-                      Thảo luận đáp án qua Chat Box nội bộ để lấy điểm chung!
-                    </span>
-                  </div>
-
-                  <div style={{
-                    width: '60px',
-                    height: '40px',
-                    backgroundColor: 'rgba(0, 240, 255, 0.12)',
-                    border: '1px solid rgba(0, 240, 255, 0.3)',
-                    color: '#00f0ff',
-                    borderRadius: '6px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 'bold',
-                    fontSize: '1.1rem'
-                  }}>
-                    {timer}s
-                  </div>
-                </div>
-
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1.2fr 0.8fr',
-                  gap: '30px'
-                }} className="grid-2-cols">
-                  
-                  {/* Left Column: Questions / Host scroll feed */}
-                  <div>
-                    <div className="premium-card" style={{
-                      backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                      border: '1px solid rgba(0, 240, 255, 0.2)',
-                      padding: '30px',
-                      marginBottom: '25px',
-                      textAlign: 'center'
-                    }}>
-                      <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-title)', lineHeight: '1.5', color: '#ffffff' }}>
-                        {activeQuestion?.text}
-                      </h3>
-                    </div>
-
-                    {isHost ? (
-                      <div className="premium-card" style={{
-                        backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                        border: '1px solid rgba(0, 240, 255, 0.2)',
-                        padding: '25px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '15px'
-                      }}>
-                        <h3 style={{ fontSize: '0.95rem', fontFamily: 'var(--font-title)', color: '#00f0ff' }}>
-                          KÊNH CHAT GIÁM SÁT LỚP HỌC (HOST SCREEN):
-                        </h3>
-                        <div ref={hostChatContainerRef} style={{
-                          height: '180px',
-                          overflowY: 'auto',
-                          backgroundColor: 'rgba(9, 10, 15, 0.7)',
-                          border: '1px solid rgba(0, 240, 255, 0.15)',
-                          padding: '15px',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '8px'
-                        }}>
-                          {classChats.map((c, i) => (
-                            <div key={i} style={{ fontSize: '0.8rem', lineHeight: '1.4' }}>
-                              <strong style={{ color: '#00f0ff' }}>[{c.teamName}] {c.sender}</strong>: <span style={{ color: '#e2e8f0' }}>{c.text}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {activeQuestion?.options.map((opt) => {
-                          const isThisSelected = selectedAnswer === opt.key;
-                          return (
-                            <button
-                              key={opt.key}
-                              disabled={hasAnswered}
-                              onClick={() => handlePlayerSubmitDuoAnswer(opt.key, activeQuestion.correctKey)}
-                              style={{
-                                backgroundColor: isThisSelected ? 'rgba(0, 240, 255, 0.12)' : 'rgba(15, 20, 35, 0.85)',
-                                border: isThisSelected ? '1.5px solid #00f0ff' : '1px solid rgba(0, 240, 255, 0.15)',
-                                borderRadius: '8px',
-                                padding: '16px 20px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
-                                textAlign: 'left',
-                                color: '#e2e8f0',
-                                cursor: hasAnswered ? 'default' : 'pointer',
-                                width: '100%',
-                                fontFamily: 'var(--font-sans)',
-                              }}
-                            >
-                              <span style={{
-                                width: '28px',
-                                height: '28px',
-                                borderRadius: '50%',
-                                backgroundColor: isThisSelected ? '#00f0ff' : 'rgba(9, 10, 15, 0.6)',
-                                color: isThisSelected ? '#090a0f' : '#00f0ff',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyStyle: 'center',
-                                justifyContent: 'center',
-                                fontWeight: 700
-                              }}>
-                                {opt.key}
-                              </span>
-                              <span>{opt.text}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Sidebar Chat / Leaderboard */}
-                  <div>
-                    {isHost ? (
-                      <div className="premium-card" style={{
-                        backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                        border: '1px solid rgba(0, 240, 255, 0.2)',
-                        padding: '25px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '15px'
-                      }}>
-                        <h3 style={{ fontSize: '0.95rem', fontFamily: 'var(--font-title)', color: '#00f0ff' }}>
-                          ĐIỂM SỐ CÁC CẶP ĐẤU
-                        </h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                          {teams.map((t, idx) => (
-                            <div key={idx} style={{
-                              padding: '12px 15px',
-                              backgroundColor: 'rgba(9, 10, 15, 0.6)',
-                              borderRadius: '6px',
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              border: '1px solid rgba(0, 240, 255, 0.1)'
-                            }}>
-                              <span style={{ fontWeight: 600, color: '#ffffff' }}>{t.name}</span>
-                              <strong style={{ color: '#ffd700' }}>{t.score} pts</strong>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="premium-card" style={{
-                        backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                        border: '1px solid rgba(0, 240, 255, 0.2)',
-                        padding: '25px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '15px',
-                        height: '350px'
-                      }}>
-                        <div style={{ borderBottom: '1px solid rgba(0, 240, 255, 0.25)', paddingBottom: '8px' }}>
-                          <span style={{ fontSize: '0.75rem', color: '#cbd5e1', display: 'block' }}>
-                            Kênh thảo luận cặp:
-                          </span>
-                          <strong style={{ fontSize: '0.9rem', color: '#00f0ff' }}>
-                            {teams.find(t => t.id === myTeamId)?.name} (Đồng đội: {myTeammate})
-                          </strong>
-                        </div>
-
-                        {/* Message log */}
-                        <div ref={chatContainerRef} style={{
-                          flex: 1,
-                          overflowY: 'auto',
-                          backgroundColor: 'rgba(9, 10, 15, 0.7)',
-                          padding: '10px',
-                          borderRadius: '6px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '10px',
-                          border: '1px solid rgba(0, 240, 255, 0.1)'
-                        }}>
-                          {chatMessages.length === 0 ? (
-                             <span style={{ fontSize: '0.75rem', color: '#cbd5e1', fontStyle: 'italic', margin: 'auto', textAlign: 'center' }}>
-                               Nhắn tin bàn bạc đáp án đúng...
-                             </span>
-                          ) : (
-                            chatMessages.map((msg, i) => {
-                              const isMe = msg.sender === playerName;
-                              return (
-                                <div key={i} style={{
-                                  alignSelf: isMe ? 'flex-end' : 'flex-start',
-                                  backgroundColor: isMe ? '#00f0ff' : 'rgba(15, 20, 35, 0.9)',
-                                  color: isMe ? '#090a0f' : '#ffffff',
-                                  padding: '8px 12px',
-                                  borderRadius: '8px',
-                                  fontSize: '0.8rem',
-                                  maxWidth: '80%',
-                                  lineHeight: '1.4',
-                                  border: isMe ? 'none' : '1px solid rgba(0, 240, 255, 0.15)'
-                                }}>
-                                  <span style={{ fontSize: '0.65rem', opacity: 0.8, display: 'block', fontWeight: 'bold', marginBottom: '2px' }}>
-                                    {isMe ? 'Bạn' : msg.sender}
-                                  </span>
-                                  {msg.text}
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-
-                        {/* Send bar */}
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input
-                            type="text"
-                            placeholder="Nhập tin nhắn..."
-                            value={chatInput}
-                            onChange={(e) => setChatInput(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
-                            style={{
-                              flex: 1,
-                              padding: '8px 12px',
-                              borderRadius: '6px',
-                              border: '1px solid rgba(0, 240, 255, 0.3)',
-                              backgroundColor: 'rgba(9, 10, 15, 0.8)',
-                              color: '#ffffff',
-                              outline: 'none',
-                              fontSize: '0.85rem'
-                            }}
-                          />
-                          <button onClick={handleSendChat} style={{
-                            padding: '8px 12px',
-                            borderRadius: '6px',
-                            border: 'none',
-                            backgroundColor: '#00f0ff',
-                            color: '#090a0f',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center'
-                          }}>
-                            <Send size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                </div>
-
-                {isHost && (
-                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '35px' }}>
-                    {teamQuestionIdx < 2 ? (
-                      <button onClick={handleNextTeamQuestion} style={{
-                        padding: '12px 28px',
-                        backgroundColor: '#00f0ff',
-                        color: '#090a0f',
-                        border: 'none',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}>
-                        Câu hỏi nhóm tiếp theo <ArrowRight size={16} />
-                      </button>
-                    ) : (
-                      <button onClick={handleFinishTeamDuo} style={{
-                        padding: '12px 28px',
-                        backgroundColor: '#ff5353',
-                        color: '#ffffff',
-                        border: 'none',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}>
-                        Xem Cặp Đấu Thắng Cuộc <ArrowRight size={16} />
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* FINALE_LOBBY */}
-            {gameState === 'FINALE_LOBBY' && (
-              <div style={{ maxWidth: '750px', margin: '0 auto', textAlign: 'center' }}>
-                <div className="section-title-wrapper" style={{ textAlign: 'center', marginBottom: '30px' }}>
-                  <p className="section-subtitle" style={{ color: '#00f0ff' }}>1V1 CHUNG KẾT</p>
-                  <h2 className="section-title" style={{ color: '#ffffff' }}>Huynh Đệ Tương Tàn</h2>
-                </div>
-
-                <div className="premium-card" style={{
-                  backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                  border: '1px solid #ffd700',
-                  padding: '40px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '20px',
-                  marginBottom: '35px'
-                }}>
-                  <Trophy size={40} color="#ffd700" style={{ alignSelf: 'center' }} />
-                  <h3 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-title)', color: '#ffd700' }}>
-                    CẶP ĐẤU CHIẾN THẮNG VÒNG ĐỒNG ĐỘI:
-                  </h3>
-                  <strong style={{ fontSize: '1.8rem', color: '#00f0ff', fontFamily: 'var(--font-title)', letterSpacing: '1px' }}>
-                    {winningTeamName}
-                  </strong>
-                  
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: '40px',
-                    margin: '15px 0'
-                  }}>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>Đấu thủ 1:</span>
-                      <strong style={{ fontSize: '1.2rem', color: '#ffffff' }}>{finalists[0]}</strong>
-                    </div>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#ffd700' }}>VS</span>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>Đấu thủ 2:</span>
-                      <strong style={{ fontSize: '1.2rem', color: '#ffffff' }}>{finalists[1]}</strong>
-                    </div>
-                  </div>
-
-                  <p style={{ fontSize: '0.9rem', color: '#cbd5e1', lineHeight: '1.5' }}>
-                    Hai đồng đội vừa đồng cam cộng khổ sẽ bị chia đôi để bước vào trận quyết chiến 1v1 tìm kiếm ngôi vương!
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
+                  <Trophy size={45} color="#ffd700" />
+                  <h3 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-title)', color: '#ffffff', margin: 0 }}>Người Quản Trò (Host)</h3>
+                  <p style={{ fontSize: '0.88rem', color: '#cbd5e1', lineHeight: '1.5', margin: 0 }}>
+                    Tạo phòng thi đấu real-time, nhận thông báo danh sách sinh viên tham gia và phát lệnh khởi tranh.
                   </p>
                 </div>
 
-                {!isHost && (
-                  <div style={{
-                    padding: '15px',
-                    borderRadius: '8px',
-                    backgroundColor: finalists.includes(playerName) ? 'rgba(255, 83, 83, 0.08)' : 'rgba(15, 20, 35, 0.6)',
-                    color: finalists.includes(playerName) ? '#ff5353' : '#cbd5e1',
-                    fontSize: '1rem',
-                    fontWeight: 'bold',
-                    border: finalists.includes(playerName) ? '1px solid rgba(255, 83, 83, 0.2)' : '1px solid rgba(0, 240, 255, 0.1)',
-                    marginBottom: '30px'
-                  }}>
-                    {finalists.includes(playerName) 
-                      ? 'BẠN ĐÃ LỌT VÀO TRẬN ĐẤU ĐƠN CHUNG KẾT 1V1! HÃY CHUẨN BỊ CHIẾN ĐẤU VỚI CỰU ĐỒNG ĐỘI!' 
-                      : 'BẠN LÀ KHÁN GIẢ. HÃY CỔ VŨ CHO HAI ĐẤU THỦ CHUNG KẾT!' }
-                  </div>
-                )}
+                <button onClick={handleHostCreateRoom} style={{
+                  width: '100%', padding: '14px', backgroundColor: '#00f0ff', color: '#090a0f', border: 'none', fontWeight: 'bold', cursor: 'pointer', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '1rem'
+                }}>
+                  <Play size={18} /> Tạo phòng thi đấu
+                </button>
+              </div>
 
-                {isHost && (
-                  <button onClick={handleStartFinaleRound} style={{
-                    margin: '0 auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '12px 28px',
-                    backgroundColor: '#ffd700',
+              {/* Player Card with Animal Mascot Picker */}
+              <div className="premium-card" style={{
+                backgroundColor: 'rgba(15, 20, 35, 0.85)',
+                border: '1px solid rgba(0, 240, 255, 0.3)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '18px',
+                padding: '30px'
+              }}>
+                <div style={{ textAlign: 'center' }}>
+                  <h3 style={{ fontSize: '1.35rem', fontFamily: 'var(--font-title)', color: '#ffffff', margin: 0 }}>Sinh Viên (Player)</h3>
+                  <p style={{ fontSize: '0.82rem', color: '#cbd5e1', marginTop: '4px' }}>
+                    Chọn <strong>Linh Vật Động Vật</strong> & Nhập mã phòng để đua top!
+                  </p>
+                </div>
+
+                {/* Animal Mascot Picker Grid */}
+                <div>
+                  <label style={{ fontSize: '0.78rem', color: '#00f0ff', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '8px' }}>
+                    CHỌN LINH VẬT ĐẠI DIỆN:
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                    {ANIMAL_MASCOTS.map((m) => {
+                      const isSelected = selectedMascot.id === m.id;
+                      return (
+                        <button
+                          key={m.id}
+                          onClick={() => setSelectedMascot(m)}
+                          style={{
+                            padding: '8px 4px',
+                            borderRadius: '8px',
+                            backgroundColor: isSelected ? 'rgba(0, 240, 255, 0.2)' : 'rgba(9, 10, 15, 0.6)',
+                            border: isSelected ? `2px solid ${m.color}` : '1px solid rgba(255,255,255,0.1)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '2px',
+                            transition: 'all 0.2s ease',
+                            transform: isSelected ? 'scale(1.05)' : 'none'
+                          }}
+                        >
+                          <span style={{ fontSize: '1.5rem' }}>{m.emoji}</span>
+                          <span style={{ fontSize: '0.68rem', color: isSelected ? '#ffffff' : '#cbd5e1', fontWeight: isSelected ? 'bold' : 'normal' }}>
+                            {m.title}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Name & Room Code Inputs */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <input
+                    type="text" placeholder="Tên của bạn..." value={playerName} onChange={(e) => setPlayerName(e.target.value)}
+                    style={{ padding: '11px', borderRadius: '6px', border: '1px solid rgba(0, 240, 255, 0.3)', backgroundColor: 'rgba(9, 10, 15, 0.8)', color: '#ffffff', outline: 'none' }}
+                  />
+                  <input
+                    type="text" placeholder="Mã phòng (ví dụ: 1234)..." value={roomCode} onChange={(e) => setRoomCode(e.target.value)}
+                    style={{ padding: '11px', borderRadius: '6px', border: '1px solid rgba(0, 240, 255, 0.3)', backgroundColor: 'rgba(9, 10, 15, 0.8)', color: '#ffffff', outline: 'none' }}
+                  />
+                </div>
+
+                <button onClick={handlePlayerJoinRoom} style={{
+                  width: '100%', padding: '13px', border: '1.5px solid #00f0ff', backgroundColor: 'transparent', color: '#00f0ff', fontWeight: 'bold', cursor: 'pointer', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '1rem'
+                }}>
+                  <ArrowRight size={18} /> Vào phòng chơi với {selectedMascot.emoji} {selectedMascot.name}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Screen 2: LOBBY & PLAYER ROSTER */}
+        {gameState === 'LOBBY' && (
+          <div style={{ maxWidth: '850px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+              <button onClick={resetToRoleSelection} style={{ border: 'none', background: 'none', color: '#cbd5e1', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <ArrowLeft size={16} /> Rời phòng
+              </button>
+              
+              <div style={{ backgroundColor: 'rgba(0, 240, 255, 0.1)', border: '1px solid #00f0ff', padding: '8px 20px', borderRadius: '20px', color: '#00f0ff', fontWeight: 'bold' }}>
+                MÃ PHÒNG CHƠI: <span style={{ fontSize: '1.4rem', fontFamily: 'var(--font-title)', marginLeft: '6px' }}>{roomCode}</span>
+              </div>
+            </div>
+
+            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+              <h2 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-title)', color: '#ffffff' }}>
+                PHÒNG CHỜ THI ĐẤU (REAL-TIME)
+              </h2>
+              <p style={{ color: '#cbd5e1', fontSize: '0.92rem' }}>
+                Đang kết nối: <strong style={{ color: '#00f0ff' }}>{leaderboard.length} Đấu thủ Linh Vật</strong>. Đang đợi Host khởi tranh!
+              </p>
+            </div>
+
+            {/* Player Roster Grid with Animal Mascots */}
+            <div className="premium-card" style={{
+              backgroundColor: 'rgba(15, 20, 35, 0.85)',
+              border: '1px solid rgba(0, 240, 255, 0.25)',
+              borderRadius: '12px',
+              padding: '25px',
+              marginBottom: '35px'
+            }}>
+              <h3 style={{ fontSize: '1.1rem', color: '#ffffff', marginBottom: '18px', fontFamily: 'var(--font-title)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Users size={20} color="#00f0ff" /> Danh Sách Đấu Thủ Trong Phòng ({leaderboard.length})
+              </h3>
+
+              {leaderboard.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '30px 10px', color: '#64748b', fontSize: '0.9rem' }}>
+                  <Users size={32} color="#64748b" style={{ marginBottom: '8px' }} /><br/>
+                  Chưa có sinh viên nào tham gia. Đang chờ người chơi nhập mã phòng <strong>{roomCode}</strong>...
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+                  {leaderboard.map((p, idx) => {
+                    const isMe = p.name === playerName.trim();
+                    return (
+                      <div key={idx} style={{
+                        padding: '12px 16px',
+                        borderRadius: '10px',
+                        backgroundColor: isMe ? 'rgba(0, 255, 136, 0.15)' : 'rgba(9, 10, 15, 0.6)',
+                        border: isMe ? '1.5px solid #00ff88' : '1px solid rgba(0, 240, 255, 0.15)',
+                        color: isMe ? '#00ff88' : '#ffffff',
+                        fontWeight: 'bold',
+                        fontSize: '0.9rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        animation: 'fadeIn 0.3s ease-out'
+                      }}>
+                        <span style={{ fontSize: '1.6rem' }}>{p.avatar || '🦊'}</span>
+                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <span style={{ display: 'block', fontSize: '0.92rem' }}>{p.name} {isMe && '(Bạn)'}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Host Action */}
+            {isHost && (
+              <div style={{ textAlign: 'center' }}>
+                <button
+                  onClick={handleStartGame}
+                  style={{
+                    padding: '16px 45px',
+                    fontSize: '1.1rem',
+                    backgroundColor: '#00f0ff',
                     color: '#090a0f',
                     border: 'none',
+                    borderRadius: '30px',
                     fontWeight: 'bold',
-                    cursor: 'pointer'
-                  }}>
-                    Bắt đầu Trận Đấu Đơn 1v1 <ArrowRight size={16} />
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* GRAND_FINALE */}
-            {gameState === 'GRAND_FINALE' && (
-              <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '20px'
-                }}>
-                  <div>
-                    <span className="lacquer-badge" style={{ backgroundColor: '#ffd700', color: '#090a0f', marginRight: '10px', fontWeight: 'bold' }}>
-                      Chung Kết Đơn (Câu {finaleQuestionIdx + 1}/3)
-                    </span>
-                    <span style={{ fontSize: '0.85rem', color: '#ffd700', fontWeight: 'bold' }}>
-                      ĐIỂM NHÂN ĐÔI: Đúng +200 | Sai -100 (1v1 Solo Duel)
-                    </span>
-                  </div>
-
-                  <div style={{
-                    width: '50px',
-                    height: '50px',
-                    borderRadius: '50%',
-                    backgroundColor: 'rgba(255, 83, 83, 0.12)',
-                    border: '1px solid rgba(255, 83, 83, 0.3)',
-                    color: '#ff5353',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 'bold',
-                    fontSize: '1.1rem'
-                  }}>
-                    {timer}
-                  </div>
-                </div>
-
-                {/* Question Area */}
-                <div className="premium-card" style={{
-                  backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                  border: '1px solid rgba(0, 240, 255, 0.2)',
-                  padding: '35px',
-                  textAlign: 'center',
-                  marginBottom: '30px'
-                }}>
-                  <h3 style={{ fontSize: '1.3rem', fontFamily: 'var(--font-title)', lineHeight: '1.5', color: '#ffffff' }}>
-                    {QUESTIONS[9 + finaleQuestionIdx].text}
-                  </h3>
-                </div>
-
-                {/* Options / Specating view */}
-                {isHost ? (
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '20px'
-                  }} className="grid-2-cols">
-                    {QUESTIONS[9 + finaleQuestionIdx].options.map((opt) => (
-                      <div key={opt.key} style={{
-                        backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                        border: '1px solid rgba(0, 240, 255, 0.15)',
-                        padding: '20px',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '15px'
-                      }}>
-                        <span style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '50%',
-                          backgroundColor: 'rgba(9, 10, 15, 0.6)',
-                          color: '#00f0ff',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 700
-                        }}>
-                          {opt.key}
-                        </span>
-                        <span style={{ fontSize: '0.95rem', color: '#e2e8f0', fontWeight: 500 }}>
-                          {opt.text}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  finalists.includes(playerName) ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      {QUESTIONS[9 + finaleQuestionIdx].options.map((opt) => {
-                        const isThisSelected = selectedAnswer === opt.key;
-                        return (
-                          <button
-                            key={opt.key}
-                            disabled={hasAnswered}
-                            onClick={() => handlePlayerSubmitFinaleAnswer(opt.key, QUESTIONS[9 + finaleQuestionIdx].correctKey)}
-                            style={{
-                              backgroundColor: isThisSelected ? 'rgba(0, 240, 255, 0.12)' : 'rgba(15, 20, 35, 0.85)',
-                              border: isThisSelected ? '1.5px solid #00f0ff' : '1px solid rgba(0, 240, 255, 0.15)',
-                              borderRadius: '8px',
-                              padding: '16px 20px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '12px',
-                              textAlign: 'left',
-                              color: '#e2e8f0',
-                              cursor: hasAnswered ? 'default' : 'pointer',
-                              width: '100%',
-                              fontFamily: 'var(--font-sans)',
-                            }}
-                          >
-                            <span style={{
-                              width: '28px',
-                              height: '28px',
-                              borderRadius: '50%',
-                              backgroundColor: isThisSelected ? '#00f0ff' : 'rgba(9, 10, 15, 0.6)',
-                              color: isThisSelected ? '#090a0f' : '#00f0ff',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontWeight: 700
-                            }}>
-                              {opt.key}
-                            </span>
-                            <span>{opt.text}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="premium-card" style={{
-                      backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                      border: '1px solid rgba(0, 240, 255, 0.15)',
-                      padding: '30px',
-                      textAlign: 'center'
-                    }}>
-                      <p style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#cbd5e1' }}>
-                        BẠN ĐANG XEM TRẬN CHUNG KẾT
-                      </p>
-                      <p style={{ fontSize: '0.85rem', color: '#cbd5e1', marginTop: '5px' }}>
-                        Theo dõi cựu đồng đội {finalists.join(' và ')} so tài tìm ra nhà vô địch.
-                      </p>
-                    </div>
-                  )
-                )}
-
-                {/* Host actions */}
-                {isHost && (
-                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '35px' }}>
-                    {finaleQuestionIdx < 2 ? (
-                      <button onClick={handleNextFinaleQuestion} style={{
-                        padding: '12px 28px',
-                        backgroundColor: '#00f0ff',
-                        color: '#090a0f',
-                        border: 'none',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}>
-                        Câu hỏi chung kết tiếp theo <ArrowRight size={16} />
-                      </button>
-                    ) : (
-                      <button onClick={handleFinishGame} style={{
-                        padding: '12px 28px',
-                        backgroundColor: '#ffd700',
-                        color: '#090a0f',
-                        border: 'none',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}>
-                        Tiết lộ Nhà Vô Địch <Trophy size={16} />
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* FINAL_LEADERBOARD */}
-            {gameState === 'FINAL_LEADERBOARD' && (
-              <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
-                <div className="section-title-wrapper" style={{ textAlign: 'center', marginBottom: '30px' }}>
-                  <p className="section-subtitle" style={{ color: '#00f0ff', letterSpacing: '2px' }}>TOURNAMENT COMPLETED</p>
-                  <h2 className="section-title" style={{ color: '#ffffff' }}>NHÀ VÔ ĐỊCH TOÀN GIẢI</h2>
-                </div>
-
-                {leaderboard.length > 0 && (
-                  <div style={{
-                    backgroundColor: 'rgba(15, 20, 35, 0.9)',
-                    border: '2px solid #ffd700',
-                    padding: '40px 30px',
-                    borderRadius: '12px',
-                    display: 'inline-flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '15px',
-                    marginBottom: '35px'
-                  }}>
-                    <Trophy size={60} color="#ffd700" style={{ animation: 'pulse 1s infinite alternate' }} />
-                    <span style={{ fontSize: '0.85rem', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                      NHÀ VÔ ĐỊCH ĐẤU TRƯỜNG
-                    </span>
-                    <strong style={{ fontSize: '2.2rem', fontFamily: 'var(--font-title)', color: '#ffffff' }}>
-                      {leaderboard[0].name}
-                    </strong>
-                    <span style={{
-                      fontSize: '0.95rem',
-                      backgroundColor: 'rgba(0, 240, 255, 0.15)',
-                      border: '1px solid rgba(0, 240, 255, 0.3)',
-                      padding: '6px 16px',
-                      borderRadius: '20px',
-                      fontWeight: 'bold',
-                      color: '#00f0ff'
-                    }}>
-                      {leaderboard[0].score} pts
-                    </span>
-                  </div>
-                )}
-
-                {/* Score list */}
-                <div className="premium-card" style={{
-                  backgroundColor: 'rgba(15, 20, 35, 0.85)',
-                  border: '1px solid rgba(0, 240, 255, 0.2)',
-                  padding: '30px',
-                  maxWidth: '600px',
-                  margin: '0 auto 30px auto'
-                }}>
-                  <h3 style={{ fontSize: '1.1rem', fontFamily: 'var(--font-title)', color: '#00f0ff', marginBottom: '15px' }}>
-                    XẾP HẠNG CHI TIẾT
-                  </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
-                    {leaderboard.slice(0, 10).map((p, idx) => (
-                      <div key={idx} style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '8px 12px',
-                        backgroundColor: 'rgba(9, 10, 15, 0.6)',
-                        border: '1px solid rgba(0, 240, 255, 0.1)',
-                        borderRadius: '6px'
-                      }}>
-                        <span style={{ fontSize: '0.9rem', fontWeight: idx === 0 ? 700 : 500, color: '#ffffff' }}>
-                          #{idx + 1} {p.name}
-                        </span>
-                        <strong style={{ fontSize: '0.9rem', color: idx === 0 ? '#ffd700' : '#00f0ff' }}>
-                          {p.score} pts
-                        </strong>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <button onClick={resetToRoleSelection} style={{
-                  padding: '14px 40px',
-                  backgroundColor: '#00f0ff',
-                  color: '#090a0f',
-                  border: 'none',
-                  fontWeight: 'bold',
-                  cursor: 'pointer'
-                }}>
-                  Trở lại màn hình chính
+                    cursor: 'pointer',
+                    boxShadow: '0 0 25px rgba(0, 240, 255, 0.4)'
+                  }}
+                >
+                  🚀 BẮT ĐẦU TRẬN ĐẤU CÁ NHÂN
                 </button>
               </div>
             )}
-          </>
+          </div>
+        )}
+
+        {/* Screen 3: IN-GAME INDIVIDUAL WORD SEARCH */}
+        {gameState === 'PLAYING' && (
+          <div>
+            {/* Top Stats Banner */}
+            <div className="premium-card" style={{
+              backgroundColor: 'rgba(15, 20, 35, 0.85)',
+              border: '1px solid rgba(0, 240, 255, 0.3)',
+              borderRadius: '12px',
+              padding: '14px 20px',
+              marginBottom: '25px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '15px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '1.3rem' }}>{selectedMascot.emoji}</span>
+                  <span style={{ fontSize: '0.88rem', color: '#cbd5e1' }}>Điểm cá nhân:</span>
+                  <strong style={{ fontSize: '1.2rem', color: '#ffd700' }}>{score}đ</strong>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Zap size={20} color={timer < 60 ? '#ff4444' : '#00f0ff'} />
+                  <span style={{ fontSize: '0.88rem', color: '#cbd5e1' }}>Thời gian còn lại:</span>
+                  <strong style={{ 
+                    fontSize: '1.1rem', 
+                    color: timer < 60 ? '#ff4444' : '#00f0ff', 
+                    fontFamily: 'monospace',
+                    animation: timer < 60 ? 'pulse 1s infinite alternate' : 'none'
+                  }}>
+                    {formatTime(timer)}
+                  </strong>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '0.85rem', color: '#00ff88', fontWeight: 'bold' }}>
+                  Tiến độ: {targetWords.filter(w => w.found).length} / {targetWords.length} từ
+                </span>
+                <button onClick={handleUseHint} disabled={hintsLeft <= 0} style={{ padding: '6px 12px', fontSize: '0.78rem', backgroundColor: 'rgba(255, 215, 0, 0.15)', border: '1px solid #ffd700', color: '#ffd700', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
+                  <Lightbulb size={14} style={{ display: 'inline', marginRight: '4px' }} /> Gợi ý ({hintsLeft})
+                </button>
+              </div>
+            </div>
+
+            {/* Word Search Grid & Individual Leaderboard */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 340px', gap: '30px', alignItems: 'start' }}>
+              
+              {/* Grid */}
+              <div className="premium-card" style={{
+                backgroundColor: 'rgba(15, 20, 35, 0.85)',
+                border: '1px solid rgba(0, 240, 255, 0.3)',
+                borderRadius: '14px',
+                padding: '18px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center'
+              }}>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
+                  gap: '4px',
+                  maxWidth: '620px',
+                  width: '100%',
+                  aspectRatio: '1/1',
+                  touchAction: 'none'
+                }}>
+                  {grid.map((row, r) =>
+                    row.map((char, c) => {
+                      const selected = isCellSelected(r, c);
+                      const foundColor = getCellFoundColor(r, c);
+                      const isHinted = hintedPos && hintedPos.r === r && hintedPos.c === c;
+
+                      return (
+                        <div
+                          key={`${r}-${c}`}
+                          onMouseDown={() => handleCellMouseDown(r, c)}
+                          onMouseEnter={() => handleCellMouseEnter(r, c)}
+                          onTouchStart={() => handleCellMouseDown(r, c)}
+                          data-r={r}
+                          data-c={c}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 'bold',
+                            fontSize: '0.92rem',
+                            fontFamily: 'monospace',
+                            borderRadius: '5px',
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                            backgroundColor: selected 
+                              ? '#00f0ff' 
+                              : foundColor 
+                              ? foundColor 
+                              : isHinted
+                              ? '#ffd700'
+                              : 'rgba(9, 10, 15, 0.8)',
+                            color: selected || foundColor || isHinted ? '#090a0f' : '#ffffff',
+                            border: selected ? '2px solid #ffffff' : foundColor ? `1px solid ${foundColor}` : '1px solid rgba(0, 240, 255, 0.12)'
+                          }}
+                        >
+                          {char}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Sidebar: Individual Leaderboard & Word Checklist */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                
+                {/* Real-Time Individual Leaderboard */}
+                <div className="premium-card" style={{
+                  backgroundColor: 'rgba(15, 20, 35, 0.85)',
+                  border: '1px solid rgba(0, 240, 255, 0.3)',
+                  borderRadius: '14px',
+                  padding: '20px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', borderBottom: '1px solid rgba(0, 240, 255, 0.2)', paddingBottom: '8px' }}>
+                    <Trophy size={18} color="#ffd700" />
+                    <h3 style={{ fontSize: '1.05rem', color: '#ffffff', margin: 0, fontFamily: 'var(--font-title)' }}>
+                      BẢNG XẾP HẠNG TRỰC TIẾP
+                    </h3>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '180px', overflowY: 'auto' }}>
+                    {leaderboard.map((p, idx) => {
+                      const isMe = p.name === playerName.trim();
+                      return (
+                        <div key={idx} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          backgroundColor: isMe ? 'rgba(0, 255, 136, 0.15)' : 'rgba(9, 10, 15, 0.6)',
+                          border: isMe ? '1px solid #00ff88' : '1px solid rgba(255,255,255,0.05)',
+                          fontSize: '0.82rem'
+                        }}>
+                          <span style={{ fontWeight: isMe ? 'bold' : 'normal', color: isMe ? '#00ff88' : '#ffffff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>{p.avatar || '🦊'}</span> #{idx + 1} {p.name} {isMe && '(Bạn)'}
+                          </span>
+                          <strong style={{ color: '#ffd700' }}>{p.score}đ ({p.foundCount || 0}/10)</strong>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Word Checklist */}
+                <div className="premium-card" style={{
+                  backgroundColor: 'rgba(15, 20, 35, 0.85)',
+                  border: '1px solid rgba(0, 240, 255, 0.3)',
+                  borderRadius: '14px',
+                  padding: '20px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', borderBottom: '1px solid rgba(0, 240, 255, 0.2)', paddingBottom: '8px' }}>
+                    <BookOpen size={18} color="#00f0ff" />
+                    <h3 style={{ fontSize: '1.05rem', color: '#ffffff', margin: 0, fontFamily: 'var(--font-title)' }}>
+                      TỪ KHÓA CẦN TÌM
+                    </h3>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '220px', overflowY: 'auto' }}>
+                    {targetWords.map((wObj, idx) => (
+                      <div key={idx} onClick={() => wObj.found && setActiveDefinition(wObj)} style={{
+                        padding: '8px 12px', borderRadius: '6px', backgroundColor: wObj.found ? 'rgba(0, 255, 136, 0.08)' : 'rgba(9, 10, 15, 0.6)', border: wObj.found ? `1px solid ${wObj.color}` : '1px solid rgba(0, 240, 255, 0.1)', cursor: wObj.found ? 'pointer' : 'default', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                      }}>
+                        <span style={{ fontWeight: 'bold', fontSize: '0.85rem', textDecoration: wObj.found ? 'line-through' : 'none', color: wObj.found ? '#cbd5e1' : '#ffffff' }}>
+                          {wObj.display}
+                        </span>
+                        {wObj.found && <span style={{ fontSize: '0.72rem', color: wObj.color, fontWeight: 'bold' }}>Đã tìm thấy</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Screen 4: FINISHED VICTORY PODIUM */}
+        {gameState === 'FINISHED' && (
+          <div style={{ maxWidth: '650px', margin: '40px auto', textAlign: 'center' }}>
+            <div className="premium-card" style={{
+              backgroundColor: 'rgba(15, 20, 35, 0.9)', border: '2px solid #ffd700', borderRadius: '16px', padding: '40px 30px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px'
+            }}>
+              <Trophy size={65} color="#ffd700" style={{ animation: 'pulse 1s infinite alternate' }} />
+              <div>
+                <span style={{ color: '#00f0ff', fontSize: '0.85rem', fontWeight: 'bold', letterSpacing: '2px' }}>KẾT THÚC TRẬN ĐẤU</span>
+                <h2 style={{ fontSize: '2.2rem', fontFamily: 'var(--font-title)', color: '#ffffff', marginTop: '5px' }}>
+                  BẢNG XẾP HẠNG VÔ ĐỊCH
+                </h2>
+              </div>
+
+              {leaderboard.length > 0 && (
+                <div style={{ backgroundColor: 'rgba(9, 10, 15, 0.8)', border: '1px solid rgba(255,215,0,0.4)', padding: '20px 35px', borderRadius: '12px' }}>
+                  <Crown size={35} color="#ffd700" style={{ marginBottom: '5px' }} />
+                  <div style={{ fontSize: '2.5rem', marginBottom: '4px' }}>{leaderboard[0]?.avatar || '🦊'}</div>
+                  <strong style={{ fontSize: '1.8rem', color: '#ffd700', fontFamily: 'var(--font-title)', display: 'block' }}>
+                    #1 {leaderboard[0]?.name}
+                  </strong>
+                  <span style={{ fontSize: '1.1rem', color: '#00f0ff', fontWeight: 'bold' }}>
+                    {leaderboard[0]?.score} điểm ({leaderboard[0]?.foundCount}/10 từ)
+                  </span>
+                </div>
+              )}
+
+              <button onClick={resetToRoleSelection} style={{ padding: '14px 35px', backgroundColor: '#00f0ff', color: '#090a0f', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+                Trở Về Màn Hình Chính
+              </button>
+            </div>
+          </div>
         )}
 
       </div>
+
+      {/* Modal Tooltip: Educational Definition */}
+      {activeDefinition && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(5, 8, 18, 0.85)', backdropFilter: 'blur(6px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => setActiveDefinition(null)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'rgba(15, 20, 35, 0.95)', border: `2px solid ${activeDefinition.color || '#00f0ff'}`, borderRadius: '14px', padding: '28px', maxWidth: '550px', width: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <h3 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-title)', color: '#ffffff', margin: 0 }}>{activeDefinition.display}</h3>
+            <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.6', margin: 0 }}>{activeDefinition.definition}</p>
+            <button onClick={() => setActiveDefinition(null)} style={{ padding: '10px 24px', backgroundColor: activeDefinition.color || '#00f0ff', color: '#090a0f', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', alignSelf: 'flex-end' }}>Đã hiểu</button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Rule Guide */}
+      {showRuleModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(5, 8, 18, 0.88)', backdropFilter: 'blur(6px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => setShowRuleModal(false)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'rgba(15, 20, 35, 0.95)', border: '1px solid rgba(0, 240, 255, 0.4)', borderRadius: '14px', padding: '28px', maxWidth: '600px', width: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <h3 style={{ fontSize: '1.3rem', color: '#ffffff', margin: 0, fontFamily: 'var(--font-title)' }}>HƯỚNG DẪN THI ĐẤU CÁ NHÂN</h3>
+            <p style={{ color: '#cbd5e1', fontSize: '0.9rem', lineHeight: '1.6' }}>
+              - Chọn <strong>Linh Vật Động Vật</strong> đại diện cho phong cách thi đấu của bạn.<br/>
+              - Mỗi đấu thủ tự giải ma trận ô chữ của mình để tích lũy điểm số cá nhân.<br/>
+              - Mỗi khi tìm thấy 1 từ đúng, bạn nhận <strong>+120 điểm</strong> và cập nhật vị trí trên Bảng xếp hạng trực tiếp của cả phòng.<br/>
+              - Đấu thủ hoàn thành đủ 10 từ nhanh nhất sẽ đạt danh hiệu Vô Địch!
+            </p>
+            <button onClick={() => setShowRuleModal(false)} style={{ padding: '10px 24px', backgroundColor: '#00f0ff', color: '#090a0f', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', alignSelf: 'center' }}>Bắt Đầu Ngay</button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

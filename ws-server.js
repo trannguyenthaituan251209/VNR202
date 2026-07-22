@@ -1,17 +1,73 @@
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
+import { readFileSync, existsSync, statSync } from 'fs';
+import { join, extname, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const PORT = process.env.PORT || 8080;
+
+const MIME_TYPES = {
+  '.html': 'text/html',
+  '.js': 'text/javascript',
+  '.css': 'text/css',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.webp': 'image/webp'
+};
 
 const server = createServer((req, res) => {
+  // CORS Headers for cloud deployments
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  // Serve static files from 'dist' directory if built for production
+  let filePath = join(__dirname, 'dist', req.url === '/' ? 'index.html' : req.url);
+  
+  if (existsSync(filePath) && statSync(filePath).isFile()) {
+    const ext = extname(filePath).toLowerCase();
+    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    try {
+      const content = readFileSync(filePath);
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(content);
+      return;
+    } catch (e) {}
+  }
+
+  // Fallback to index.html for SPA routing if dist exists
+  const indexPath = join(__dirname, 'dist', 'index.html');
+  if (existsSync(indexPath)) {
+    try {
+      const content = readFileSync(indexPath);
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(content);
+      return;
+    } catch (e) {}
+  }
+
   res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('VNR202 Esports Bracket Survival Server is running.\n');
+  res.end('VNR202 Real-Time Individual Word Search Server is running.\n');
 });
 
 const wss = new WebSocketServer({ server });
 
-// Map of roomCode -> { host, players: Map(playerName -> { socket, score, activeBranch, answeredCount }), status, teams: Map, playerToTeam: Map }
+// Map of roomCode -> { host, players: Map(playerName -> { socket, avatar, score, foundCount, foundWords }), status }
 const rooms = new Map();
 
-console.log('Starting Esports Bracket WebSocket Server on port 8080...');
+console.log(`Starting VNR202 Server on port ${PORT}...`);
 
 wss.on('connection', (ws) => {
   ws.isAlive = true;
@@ -24,311 +80,120 @@ wss.on('connection', (ws) => {
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message.toString());
-      console.log('Received:', data.type, 'from', data.playerName || 'Host');
+      console.log('Received:', data.type, 'from', data.playerName || data.name || 'Host');
 
       switch (data.type) {
         case 'CREATE_ROOM': {
           const roomCode = Math.floor(1000 + Math.random() * 9000).toString();
+          
           rooms.set(roomCode, {
             host: ws,
             players: new Map(),
-            status: 'LOBBY',
-            teams: new Map(),
-            playerToTeam: new Map()
+            status: 'LOBBY'
           });
 
           userSession = { roomCode, name: 'Host', isHost: true };
-          ws.send(JSON.stringify({ type: 'ROOM_CREATED', roomCode }));
+          wsSendSafe(ws, JSON.stringify({ type: 'ROOM_CREATED', roomCode }));
+          broadcastRoomState(roomCode);
           console.log(`Room created: ${roomCode}`);
           break;
         }
 
         case 'JOIN_ROOM': {
-          const { roomCode, playerName } = data;
-          const room = rooms.get(roomCode);
+          const { roomCode, playerName, avatar } = data;
+          const cleanRoomCode = (roomCode || '').trim();
+          const cleanPlayerName = (playerName || '').trim();
+          const mascotAvatar = avatar || '🦊';
+
+          const room = rooms.get(cleanRoomCode);
 
           if (!room) {
-            ws.send(JSON.stringify({ type: 'ERROR', message: 'Phòng không tồn tại!' }));
+            wsSendSafe(ws, JSON.stringify({ type: 'ERROR', message: `Phòng ${cleanRoomCode} không tồn tại!` }));
             return;
           }
 
-          if (room.players.has(playerName)) {
-            ws.send(JSON.stringify({ type: 'ERROR', message: 'Tên người chơi đã bị trùng!' }));
+          if (room.players.has(cleanPlayerName)) {
+            wsSendSafe(ws, JSON.stringify({ type: 'ERROR', message: `Tên '${cleanPlayerName}' đã trùng trong phòng này!` }));
             return;
           }
 
-          room.players.set(playerName, {
+          room.players.set(cleanPlayerName, {
             socket: ws,
+            avatar: mascotAvatar,
             score: 0,
-            activeBranch: 'WINNERS',
-            answeredCount: 0
+            foundCount: 0,
+            foundWords: []
           });
 
-          userSession = { roomCode, name: playerName, isHost: false };
-          ws.send(JSON.stringify({ type: 'JOINED_SUCCESS', roomCode, playerName }));
+          userSession = { roomCode: cleanRoomCode, name: cleanPlayerName, isHost: false };
+          wsSendSafe(ws, JSON.stringify({ type: 'JOINED_SUCCESS', roomCode: cleanRoomCode, playerName: cleanPlayerName }));
           
-          sendPlayerListUpdate(roomCode);
-          console.log(`Player ${playerName} joined room ${roomCode}`);
+          broadcastRoomState(cleanRoomCode);
+          console.log(`Player ${cleanPlayerName} (${mascotAvatar}) joined room ${cleanRoomCode}. Total: ${room.players.size}`);
           break;
         }
 
-        case 'START_CHAOS': {
+        case 'START_GAME': {
           if (!userSession || !userSession.isHost) return;
           const room = rooms.get(userSession.roomCode);
           if (room) {
-            room.status = 'CHAOS_ROUND';
-            broadcastToRoom(userSession.roomCode, { type: 'GAME_STARTED', phase: 'CHAOS' });
-          }
-          break;
-        }
-
-        case 'SUBMIT_ANSWER': {
-          if (!userSession || userSession.isHost) return;
-          const { roomCode, name } = userSession;
-          const { isCorrect, timeRemaining } = data;
-          const room = rooms.get(roomCode);
-
-          if (room) {
-            const player = room.players.get(name);
-            if (player) {
-              player.answeredCount++;
-              
-              let points = 0;
-              if (room.status === 'CHAOS_ROUND' || room.status === 'BRANCH_BATTLE') {
-                points = isCorrect ? (100 + Math.round((timeRemaining / 15) * 50)) : -50;
-              } else if (room.status === 'TEAM_DUO_ROUND') {
-                const teamId = room.playerToTeam.get(name);
-                const team = room.teams.get(teamId);
-                if (team) {
-                  points = isCorrect ? (150 + Math.round((timeRemaining / 15) * 50)) : -100;
-                  team.score += points;
-                  if (team.score < 0) team.score = 0;
-                  
-                  broadcastToRoom(roomCode, { 
-                    type: 'TEAM_SCORE_UPDATE', 
-                    teamId, 
-                    score: team.score 
-                  });
-                }
-              } else if (room.status === 'GRAND_FINALE') {
-                points = isCorrect ? (200 + Math.round((timeRemaining / 15) * 100)) : -100;
-              }
-
-              if (room.status !== 'TEAM_DUO_ROUND') {
-                player.score += points;
-                if (player.score < 0) player.score = 0;
-                
-                ws.send(JSON.stringify({ 
-                  type: 'ANSWER_RESULT', 
-                  isCorrect, 
-                  pointsGained: points, 
-                  totalScore: player.score 
-                }));
-              }
-
-              sendSubmissionStatus(roomCode);
+            room.status = 'PLAYING';
+            // Reset player scores
+            for (const player of room.players.values()) {
+              player.score = 0;
+              player.foundCount = 0;
+              player.foundWords = [];
             }
-          }
-          break;
-        }
-
-        case 'SPLIT_BRACKETS': {
-          if (!userSession || !userSession.isHost) return;
-          const room = rooms.get(userSession.roomCode);
-          if (room) {
-            room.status = 'BRACKET_SPLIT';
-            const sortedPlayers = getRoomLeaderboard(userSession.roomCode);
-            const mid = Math.ceil(sortedPlayers.length / 2);
-            
-            sortedPlayers.forEach((p, idx) => {
-              const playerObj = room.players.get(p.name);
-              if (playerObj) {
-                playerObj.activeBranch = idx < mid ? 'WINNERS' : 'LOSERS';
-              }
-            });
 
             broadcastToRoom(userSession.roomCode, { 
-              type: 'BRACKETS_UPDATED', 
-              leaderboard: getRoomLeaderboard(userSession.roomCode), 
-              midpointIndex: mid 
-            });
-          }
-          break;
-        }
-
-        case 'START_BRANCH_BATTLE': {
-          if (!userSession || !userSession.isHost) return;
-          const room = rooms.get(userSession.roomCode);
-          if (room) {
-            room.status = 'BRANCH_BATTLE';
-            broadcastToRoom(userSession.roomCode, { type: 'GAME_STARTED', phase: 'BRANCH_BATTLE' });
-          }
-          break;
-        }
-
-        case 'PROCESS_BRANCH_BATTLE': {
-          if (!userSession || !userSession.isHost) return;
-          const room = rooms.get(userSession.roomCode);
-          if (room) {
-            room.status = 'TEAM_LOBBY';
-            const winners = [];
-            const losers = [];
-            for (const [name, p] of room.players.entries()) {
-              if (p.activeBranch === 'WINNERS') winners.push({ name, score: p.score });
-              if (p.activeBranch === 'LOSERS') losers.push({ name, score: p.score });
-            }
-            winners.sort((a, b) => b.score - a.score);
-            losers.sort((a, b) => b.score - a.score);
-
-            const survivorsWinners = winners.slice(0, 4);
-            const survivorsLosers = losers.slice(0, 2);
-            const eliminatedNames = [];
-
-            winners.slice(4).forEach(p => eliminatedNames.push(p.name));
-            losers.slice(2).forEach(p => eliminatedNames.push(p.name));
-
-            eliminatedNames.forEach((name) => {
-              const pObj = room.players.get(name);
-              if (pObj) pObj.activeBranch = 'ELIMINATED';
-            });
-
-            const teams = [
-              { id: 'TEAM_1', name: 'Đội Sao Lạc', p1: survivorsWinners[0]?.name, p2: survivorsLosers[1]?.name },
-              { id: 'TEAM_2', name: 'Đội Trống Đồng', p1: survivorsWinners[1]?.name, p2: survivorsLosers[0]?.name },
-              { id: 'TEAM_3', name: 'Đội Liêm Chính', p1: survivorsWinners[2]?.name, p2: survivorsWinners[3]?.name }
-            ];
-
-            room.teams.clear();
-            room.playerToTeam.clear();
-
-            teams.forEach((t) => {
-              room.teams.set(t.id, { name: t.name, players: [t.p1, t.p2].filter(Boolean), score: 0 });
-              if (t.p1) room.playerToTeam.set(t.p1, t.id);
-              if (t.p2) room.playerToTeam.set(t.p2, t.id);
-            });
-
-            broadcastToRoom(userSession.roomCode, {
-              type: 'TEAMS_CREATED',
-              teams: teams.map(t => ({
-                id: t.id,
-                name: t.name,
-                p1: t.p1 || 'Trống',
-                p2: t.p2 || 'Trống',
-                score: 0
-              })),
+              type: 'GAME_STARTED',
               leaderboard: getRoomLeaderboard(userSession.roomCode)
             });
-            console.log(`Teams created in room ${userSession.roomCode}`);
+            console.log(`Game started in room ${userSession.roomCode}`);
           }
           break;
         }
 
-        case 'START_TEAM_DUO': {
-          if (!userSession || !userSession.isHost) return;
-          const room = rooms.get(userSession.roomCode);
-          if (room) {
-            room.status = 'TEAM_DUO_ROUND';
-            broadcastToRoom(userSession.roomCode, { type: 'TEAM_DUO_STARTED' });
-          }
-          break;
-        }
-
-        case 'NEXT_QUESTION': {
-          if (!userSession || !userSession.isHost) return;
-          const { roomCode } = userSession;
-          const { questionIndex } = data;
-          const room = rooms.get(roomCode);
-          if (room) {
-            broadcastToRoom(roomCode, { 
-              type: 'NEW_QUESTION', 
-              questionIndex 
-            });
-            console.log(`Broadcasted new question index: ${questionIndex} in room ${roomCode}`);
-          }
-          break;
-        }
-
-        case 'SEND_TEAM_CHAT': {
+        case 'FOUND_WORD': {
           if (!userSession || userSession.isHost) return;
           const { roomCode, name } = userSession;
-          const { text } = data;
+          const { word, points } = data;
           const room = rooms.get(roomCode);
 
-          if (room && room.status === 'TEAM_DUO_ROUND') {
-            const teamId = room.playerToTeam.get(name);
-            const team = room.teams.get(teamId);
-            if (team) {
-              const teammateName = team.players.find(p => p !== name);
-              if (teammateName) {
-                const teammateObj = room.players.get(teammateName);
-                if (teammateObj && teammateObj.socket.readyState === 1) {
-                  teammateObj.socket.send(JSON.stringify({ 
-                    type: 'TEAM_CHAT_RECEIVED', 
-                    sender: name, 
-                    text 
-                  }));
-                }
-              }
+          if (room && room.status === 'PLAYING') {
+            const playerObj = room.players.get(name);
+            if (playerObj) {
+              if (!playerObj.foundWords.includes(word)) {
+                playerObj.foundWords.push(word);
+                playerObj.score += points;
+                playerObj.foundCount = playerObj.foundWords.length;
 
-              if (room.host.readyState === 1) {
-                room.host.send(JSON.stringify({
-                  type: 'CLASS_CHAT_EVENT',
-                  teamName: team.name,
-                  sender: name,
-                  text
-                }));
+                broadcastToRoom(roomCode, {
+                  type: 'LEADERBOARD_UPDATE',
+                  leaderboard: getRoomLeaderboard(roomCode),
+                  latestFinder: name,
+                  latestWord: word,
+                  latestAvatar: playerObj.avatar
+                });
+
+                console.log(`Word '${word}' found by ${name} in room ${roomCode}`);
               }
             }
           }
           break;
         }
 
-        case 'FINISH_TEAM_DUO': {
+        case 'RESTART_GAME': {
           if (!userSession || !userSession.isHost) return;
           const room = rooms.get(userSession.roomCode);
           if (room) {
-            const teamList = Array.from(room.teams.entries()).map(([id, t]) => ({ id, name: t.name, score: t.score, players: t.players }));
-            teamList.sort((a, b) => b.score - a.score);
-            const winningTeam = teamList[0];
-
-            for (const [name, p] of room.players.entries()) {
-              if (winningTeam && winningTeam.players.includes(name)) {
-                p.activeBranch = 'WINNERS';
-                p.score = winningTeam.score; 
-              } else {
-                p.activeBranch = 'ELIMINATED';
-              }
+            room.status = 'LOBBY';
+            for (const player of room.players.values()) {
+              player.score = 0;
+              player.foundCount = 0;
+              player.foundWords = [];
             }
-
-            room.status = 'FINALE_LOBBY';
-            broadcastToRoom(userSession.roomCode, {
-              type: 'FINALE_ROSTER_READY',
-              winningTeamName: winningTeam?.name || 'Chưa rõ',
-              finalists: winningTeam?.players || [],
-              leaderboard: getRoomLeaderboard(userSession.roomCode)
-            });
-            console.log(`Team Round finished. Winning team: ${winningTeam?.name}`);
-          }
-          break;
-        }
-
-        case 'START_FINALE': {
-          if (!userSession || !userSession.isHost) return;
-          const room = rooms.get(userSession.roomCode);
-          if (room) {
-            room.status = 'GRAND_FINALE';
-            broadcastToRoom(userSession.roomCode, { type: 'FINALE_STARTED' });
-          }
-          break;
-        }
-
-        case 'FINISH_GAME': {
-          if (!userSession || !userSession.isHost) return;
-          const room = rooms.get(userSession.roomCode);
-          if (room) {
-            room.status = 'FINISHED';
-            const leaderboard = getRoomLeaderboard(userSession.roomCode);
-            broadcastToRoom(userSession.roomCode, { type: 'GAME_FINISHED', finalScores: leaderboard });
+            broadcastRoomState(roomCode);
           }
           break;
         }
@@ -347,7 +212,7 @@ wss.on('connection', (ws) => {
         const room = rooms.get(roomCode);
         if (room) {
           for (const player of room.players.values()) {
-            player.socket.send(JSON.stringify({ type: 'HOST_DISCONNECTED' }));
+            wsSendSafe(player.socket, JSON.stringify({ type: 'HOST_DISCONNECTED' }));
             player.socket.close();
           }
           rooms.delete(roomCode);
@@ -356,19 +221,17 @@ wss.on('connection', (ws) => {
         const room = rooms.get(roomCode);
         if (room) {
           room.players.delete(name);
-          sendPlayerListUpdate(roomCode);
-          sendSubmissionStatus(roomCode);
+          broadcastRoomState(roomCode);
         }
       }
     }
   });
 });
 
-// Heartbeat interval to ping clients every 20 seconds and clear inactive connections
+// Heartbeat interval
 const heartbeatInterval = setInterval(() => {
   wss.clients.forEach((ws) => {
     if (ws.isAlive === false) {
-      console.log('Terminating dead websocket client...');
       return ws.terminate();
     }
     ws.isAlive = false;
@@ -388,30 +251,28 @@ function getRoomLeaderboard(roomCode) {
   for (const [name, player] of room.players.entries()) {
     list.push({
       name,
+      avatar: player.avatar || '🦊',
       score: player.score,
-      activeBranch: player.activeBranch,
-      answeredCount: player.answeredCount
+      foundCount: player.foundCount
     });
   }
   return list.sort((a, b) => b.score - a.score);
 }
 
-function sendPlayerListUpdate(roomCode) {
+function broadcastRoomState(roomCode) {
   const room = rooms.get(roomCode);
   if (!room) return;
 
-  const playersList = Array.from(room.players.keys());
-  room.host.send(JSON.stringify({ type: 'PLAYERS_LIST', players: playersList }));
-}
+  const lb = getRoomLeaderboard(roomCode);
+  const payload = {
+    type: 'ROOM_STATE_UPDATE',
+    status: room.status,
+    playersCount: room.players.size,
+    leaderboard: lb
+  };
 
-function sendSubmissionStatus(roomCode) {
-  const room = rooms.get(roomCode);
-  if (!room) return;
-
-  broadcastToRoom(roomCode, { 
-    type: 'SUBMISSION_STATUS', 
-    leaderboard: getRoomLeaderboard(roomCode)
-  });
+  console.log(`Broadcasting ROOM_STATE_UPDATE for room ${roomCode} (${lb.length} players):`, lb.map(p => `${p.avatar} ${p.name}`));
+  broadcastToRoom(roomCode, payload);
 }
 
 function broadcastToRoom(roomCode, payload) {
@@ -419,7 +280,10 @@ function broadcastToRoom(roomCode, payload) {
   if (!room) return;
 
   const msg = JSON.stringify(payload);
-  room.host.send(msg);
+  if (room.host && room.host.readyState === 1) {
+    wsSendSafe(room.host, msg);
+  }
+
   for (const player of room.players.values()) {
     if (player.socket.readyState === 1) {
       wsSendSafe(player.socket, msg);
@@ -437,6 +301,6 @@ function wsSendSafe(socket, message) {
   }
 }
 
-server.listen(8080, () => {
-  console.log('Server is listening on http://localhost:8080');
+server.listen(PORT, () => {
+  console.log(`VNR202 Production Server is running on port ${PORT}`);
 });
