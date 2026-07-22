@@ -1,0 +1,311 @@
+/* Core Theme Tokens & Custom Properties */
+:root {
+  --color-bg: #FAF6EE;
+  --color-bg-alt: #F3ECE0;
+  --color-text-primary: #2C241E;
+  --color-text-secondary: #5C5249;
+  --color-gold-light: #E9DCC9;
+  --color-gold: #C5A880;
+  --color-gold-dark: #8E714B;
+  --color-gold-glow: #F2D299;
+  --color-lacquer: #9E2B1E;
+  --color-lacquer-light: #C03E30;
+  --color-white: #FFFFFF;
+  --color-card-bg: rgba(255, 255, 255, 0.96);
+  
+  --font-title: 'Montserrat', sans-serif;
+  --font-accent: 'Montserrat', sans-serif;
+  --font-serif: 'Montserrat', sans-serif;
+  --font-sans: 'Montserrat', sans-serif;
+  
+  --shadow-sm: 0 4px 6px -1px rgba(142, 113, 75, 0.1), 0 2px 4px -1px rgba(142, 113, 75, 0.06);
+  --shadow-md: 0 10px 15px -3px rgba(142, 113, 75, 0.15), 0 4px 6px -2px rgba(142, 113, 75, 0.08);
+  --shadow-lg: 0 20px 25px -5px rgba(142, 113, 75, 0.2), 0 10px 10px -5px rgba(142, 113, 75, 0.1);
+  --shadow-gold: 0 0 15px rgba(197, 168, 128, 0.4);
+  
+  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Global Reset & Base Styling */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-gold) var(--color-bg);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Background Cultural Motif (Watermark) */
+body::before {
+  content: "";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90vw;
+  height: 90vw;
+  max-width: 800px;
+  max-height: 800px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' opacity='0.03'%3E%3Ccircle cx='50' cy='50' r='45' fill='none' stroke='%23C5A880' stroke-width='0.5'/%3E%3Ccircle cx='50' cy='50' r='38' fill='none' stroke='%23C5A880' stroke-width='0.3' stroke-dasharray='1 1'/%3E%3Ccircle cx='50' cy='50' r='25' fill='none' stroke='%23C5A880' stroke-width='0.3'/%3E%3Cpath d='M50,15 L50,85 M15,50 L85,50 M25,25 L75,75 M25,75 L75,25' stroke='%23C5A880' stroke-width='0.2'/%3E%3Cpolygon points='50,43 52,48 57,50 52,52 50,57 48,52 43,50 48,48' fill='%23C5A880'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-gold);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold-dark);
+}
+
+/* Typography Defaults */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+/* Structural Components */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Key Fret Border Decoration (Common in Traditional Vietnamese Art) */
+.viet-border-bottom {
+  position: relative;
+  padding-bottom: 20px;
+}
+.viet-border-bottom::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 8px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 8' fill='%23C5A880'%3E%3Cpath d='M0,4 Q10,0 20,4 T40,4 L40,6 Q30,2 20,6 T0,6 Z'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+}
+
+/* Chim Lac Flying Animation */
+@keyframes floatChimLac {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(0, -8px, 0) rotate(-2deg); }
+  100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+}
+
+.chim-lac-float {
+  animation: floatChimLac 6s ease-in-out infinite;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+/* Rotating Dong Son Drum Central Star Animation */
+@keyframes rotateDrum {
+  from { transform: rotate3d(0, 0, 1, 0deg); }
+  to { transform: rotate3d(0, 0, 1, 360deg); }
+}
+
+.drum-rotate {
+  animation: rotateDrum 60s linear infinite;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+/* Section Header Style */
+.section-title-wrapper {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.section-subtitle {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--color-lacquer);
+  margin-bottom: 8px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  position: relative;
+  display: inline-block;
+  padding-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.section-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--color-gold-dark), var(--color-gold), var(--color-gold-dark), transparent);
+}
+
+/* Premium Card Design (Flat & Borderless) */
+.premium-card {
+  background-color: var(--color-card-bg);
+  border: none;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Page Layout Sections styling */
+.page-section {
+  padding: 100px 0;
+  position: relative;
+}
+
+.page-section:nth-child(even) {
+  background-color: var(--color-bg-alt);
+}
+
+/* Responsive Table Design */
+.premium-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+.premium-table th {
+  background-color: var(--color-gold-dark);
+  color: var(--color-white);
+  font-family: var(--font-title);
+  padding: 12px 16px;
+  text-align: left;
+  border: 1px solid var(--color-gold);
+}
+
+.premium-table td {
+  padding: 12px 16px;
+  border: 1px solid rgba(197, 168, 128, 0.3);
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.premium-table tr:hover td {
+  background-color: rgba(197, 168, 128, 0.1);
+}
+
+/* Custom Ribbon Header Decorator */
+.lacquer-badge {
+  background-color: var(--color-lacquer);
+  color: var(--color-white);
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-family: var(--font-accent);
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  display: inline-block;
+  box-shadow: 0 2px 4px rgba(158, 43, 30, 0.3);
+}
+
+/* Glassmorphism Buttons */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background-color: var(--color-lacquer);
+  color: var(--color-white);
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-accent);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: var(--transition-normal);
+  box-shadow: 0 4px 6px rgba(158, 43, 30, 0.2);
+  text-decoration: none;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-lacquer-light);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 12px rgba(158, 43, 30, 0.35);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background-color: transparent;
+  color: var(--color-gold-dark);
+  border: 2px solid var(--color-gold);
+  border-radius: 8px;
+  font-family: var(--font-accent);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: var(--transition-normal);
+  text-decoration: none;
+}
+
+.btn-secondary:hover {
+  background-color: rgba(197, 168, 128, 0.1);
+  color: var(--color-gold-dark);
+  border-color: var(--color-gold-dark);
+  transform: translateY(-2px);
+}
+
+/* Responsive adjustment */
+@media (max-width: 768px) {
+  .section-title {
+    font-size: 2rem;
+  }
+  .page-section {
+    padding: 60px 0;
+  }
+}
