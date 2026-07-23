@@ -303,6 +303,6 @@ function wsSendSafe(socket, message) {
   }
 }
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`VNR202 Production Server is running on port ${PORT}`);
 });
