@@ -34,7 +34,9 @@ const server = createServer((req, res) => {
   }
 
   // Serve static files from 'dist' directory if built for production
-  let filePath = join(__dirname, 'dist', req.url === '/' ? 'index.html' : req.url);
+  const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  const reqPath = parsedUrl.pathname;
+  let filePath = join(__dirname, 'dist', reqPath === '/' ? 'index.html' : reqPath);
   
   if (existsSync(filePath) && statSync(filePath).isFile()) {
     const ext = extname(filePath).toLowerCase();

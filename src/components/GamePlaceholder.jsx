@@ -287,7 +287,7 @@ export default function GamePlaceholder() {
       if (!wsUrl) {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const hostname = window.location.hostname || 'localhost';
-        const port = window.location.port ? `:${window.location.port}` : (hostname === 'localhost' ? ':8080' : '');
+        const port = import.meta.env.DEV ? ':8080' : (window.location.port ? `:${window.location.port}` : '');
         wsUrl = `${protocol}//${hostname}${port}`;
       }
 
