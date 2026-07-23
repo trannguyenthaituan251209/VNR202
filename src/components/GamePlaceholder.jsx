@@ -171,6 +171,7 @@ export default function GamePlaceholder() {
   const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [selectedMascot, setSelectedMascot] = useState(ANIMAL_MASCOTS[0]);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   // Individual Leaderboard State
   const [leaderboard, setLeaderboard] = useState([]);
@@ -253,7 +254,6 @@ export default function GamePlaceholder() {
         socketRef.current.send(JSON.stringify(payload));
         return true;
       } else {
-        triggerToast('⚠️ Đang kết nối máy chủ WebSocket...');
         connectWebSocket((ws) => {
           ws.send(JSON.stringify(payload));
         });
@@ -281,6 +281,8 @@ export default function GamePlaceholder() {
       } catch (e) {}
     }
 
+    setIsConnecting(true);
+
     try {
       let wsUrl = import.meta.env.VITE_WS_URL;
 
@@ -295,6 +297,7 @@ export default function GamePlaceholder() {
       socketRef.current = ws;
 
       ws.onopen = () => {
+        setIsConnecting(false);
         if (onOpenCallback) onOpenCallback(ws);
       };
 
@@ -308,11 +311,12 @@ export default function GamePlaceholder() {
       };
 
       ws.onerror = (err) => {
+        setIsConnecting(false);
         console.error("WebSocket Error:", err);
-        triggerToast('Không thể kết nối tới máy chủ WebSocket (Port 8080)!');
       };
     } catch (e) {
-      triggerToast('Lỗi mở kết nối WebSocket!');
+      setIsConnecting(false);
+      console.error("WebSocket Connect Error:", e);
     }
   };
 
@@ -738,10 +742,11 @@ export default function GamePlaceholder() {
                   </p>
                 </div>
 
-                <button onClick={handleHostCreateRoom} style={{
-                  width: '100%', padding: '14px', backgroundColor: '#00f0ff', color: '#090a0f', border: 'none', fontWeight: 'bold', cursor: 'pointer', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '1rem'
+                <button onClick={handleHostCreateRoom} disabled={isConnecting} style={{
+                  width: '100%', padding: '14px', backgroundColor: '#00f0ff', color: '#090a0f', border: 'none', fontWeight: 'bold', cursor: isConnecting ? 'not-allowed' : 'pointer', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '1rem', opacity: isConnecting ? 0.7 : 1
                 }}>
-                  <Play size={18} /> Tạo phòng thi đấu
+                  {isConnecting ? <RefreshCw size={18} className="spin" /> : <Play size={18} />}
+                  {isConnecting ? 'Đang kết nối...' : 'Tạo phòng thi đấu'}
                 </button>
               </div>
 
@@ -809,10 +814,11 @@ export default function GamePlaceholder() {
                   />
                 </div>
 
-                <button onClick={handlePlayerJoinRoom} style={{
-                  width: '100%', padding: '13px', border: '1.5px solid #00f0ff', backgroundColor: 'transparent', color: '#00f0ff', fontWeight: 'bold', cursor: 'pointer', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '1rem'
+                <button onClick={handlePlayerJoinRoom} disabled={isConnecting} style={{
+                  width: '100%', padding: '13px', border: '1.5px solid #00f0ff', backgroundColor: 'transparent', color: '#00f0ff', fontWeight: 'bold', cursor: isConnecting ? 'not-allowed' : 'pointer', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '1rem', opacity: isConnecting ? 0.7 : 1
                 }}>
-                  <ArrowRight size={18} /> Vào phòng chơi với {selectedMascot.emoji} {selectedMascot.name}
+                  {isConnecting ? <RefreshCw size={18} className="spin" /> : <ArrowRight size={18} />}
+                  {isConnecting ? 'Đang kết nối...' : `Vào phòng chơi với ${selectedMascot.emoji} ${selectedMascot.name}`}
                 </button>
               </div>
             </div>
